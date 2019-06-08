@@ -1,0 +1,4 @@
+[run]
+branch = True
+source = snippy_tldr.py
+parallel = True

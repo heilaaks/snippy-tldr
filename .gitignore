@@ -1,0 +1,27 @@
+# Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Python distribution / packaging
+build/
+dist/
+pip-wheel-metadata/
+*.egg-info/
+
+# Python unit test / coverage reports
+.cache
+.pytest_cache
+.coverage
+.coverage.*
+.tox
+coverage.xml
+htmlcov/
+pytestdebug.log
+
+# Sphinx documentation
+docs/build/
+
+# Ignore generated swap files with extensions
+*.swp
+*.swo
+*.swn

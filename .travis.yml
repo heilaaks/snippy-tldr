@@ -1,0 +1,54 @@
+language: python
+dist: xenial
+cache: pip
+
+stages:
+  - test Linux
+
+env:
+  global:
+    - V=1
+    - QUIET=
+
+install:
+  - make upgrade-wheel
+  - make install-test
+
+script:
+  - make test
+
+jobs:
+  include:
+    - name: Python 2.7
+      python: 2.7
+      stage: test Linux
+    - name: Python 3.4
+      python: 3.4
+      stage: test Linux
+    - name: Python 3.5
+      python: 3.5
+      stage: test Linux
+    - name: Python 3.6
+      python: 3.6
+      stage: test Linux
+    - name: Python 3.7
+      python: 3.7
+      stage: test Linux
+    - name: Python 3.8
+      python: 3.8-dev
+      stage: test Linux
+    - name: PyPy2
+      python: pypy
+      stage: test Linux
+    - name: PyPy3
+      python: pypy3
+      stage: test Linux
+    - name: lint python3
+      python: 3.7
+      stage: test Linux
+      script:
+        - make lint
+
+after_success:
+  - codecov
+  - coveralls
