@@ -48,7 +48,7 @@ EXTRAS_TEST = (
 
 setup(
     name='snippy-tldr',
-    version='0.1.0',
+    version='0.2a0',
     author='Heikki J. Laaksonen',
     author_email='laaksonen.heikki.j@gmail.com',
     license='Apache Software License 2.0',
