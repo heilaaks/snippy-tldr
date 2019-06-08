@@ -35,6 +35,7 @@ EXTRAS_DEVEL = (
 
 EXTRAS_TEST = (
     'flake8==3.7.7',
+    'pluggy==0.11.0',
     'pylint==1.9.4 ; python_version=="2.7.*"',
     'pylint==2.3.1 ; python_version>"2.7"',
     'pytest==4.5.0',
