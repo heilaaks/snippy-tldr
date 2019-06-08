@@ -23,9 +23,10 @@ import io
 from setuptools import setup
 
 
-def read(filename):
-    with io.open(filename, mode='r', encoding='utf-8') as f:
-        return f.read()
+with io.open('README.rst', mode='r', encoding='utf-8') as infile:
+    README = infile.read()
+
+REQUIRES = ()
 
 EXTRAS_DEVEL = (
     'sphinx==1.8.5 ; python_version<="3.4"',
@@ -53,11 +54,11 @@ setup(
     license='Apache Software License 2.0',
     url='https://github.com/heilaaks/snippy-tldr',
     description='Snippy plugin to import tldr man pages.',
-    long_description=read('README.rst'),
+    long_description=README,
     long_description_content_type='text/x-rst',
     py_modules=['snippy_tldr'],
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
-    install_requires=['pytest>=3.5.0'],
+    install_requires=REQUIRES,
     zip_safe=False,
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -81,7 +82,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
     ],
     extras_require={
-        'devel': EXTRAS_DEVEL,
+        'devel': EXTRAS_DEVEL + EXTRAS_TEST,
         'test': EXTRAS_TEST
     },
     tests_require=EXTRAS_TEST,
