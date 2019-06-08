@@ -18,6 +18,8 @@
 
 """test-snippy-tldr: Test snippy plugin to import tldr man pages.."""
 
+from snippy_tldr import SnippyTldr
+
 
 class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     """Test snippy-tldr."""
@@ -25,5 +27,8 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     @staticmethod
     def test_001():
         """First test."""
+
+        tldr = SnippyTldr()
+        tldr.run()
 
         assert 1

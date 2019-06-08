@@ -12,7 +12,7 @@ PIP            ?= pip
 PYTHON         ?= python
 PYTHON_VERSION ?= $(shell python -c 'import sys; print(sys.version_info[0])')
 INSTALL_USER   ?=
-COVERAGE       ?= --cov=snippy --cov-branch
+COVERAGE       ?= --cov snippy_tldr --cov-branch
 QUIET          ?= -qq
 V              ?=
 
@@ -51,7 +51,7 @@ docs:
 	make -C docs html
 
 test:
-	$(PYTHON) -m pytest
+	$(PYTHON) -m pytest -x ${COVERAGE} --cov-report html
 
 test-tox:
 	tox
