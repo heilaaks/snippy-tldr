@@ -6,7 +6,7 @@ Installation
 
 To install, run:
 
-.. code:: text
+.. code:: bash
 
     pip install snippy-tldr --user
 
@@ -38,16 +38,33 @@ make test target.
 Documentation
 ~~~~~~~~~~~~~
 
-TODO
+The documentation includes manual and automated documentation. Automated
+documentation is extracted from source code docstrings.
+
+.. code:: bash
+
+    # Create documents.
+    make docs
+
+    # Open the document in a web brower.
+    file:///<home>/devel/snippy-tldr/docs/build/html/development.html
 
 Relasing
 --------
 
-  .. code-block:: text
+  .. code-block:: bash
 
       # Test PyPI installation before official release into PyPI.
-      > https://testpypi.python.org/pypi
       make clean-all
       python setup.py sdist bdist_wheel
       twine check dist/*
       twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+      # Create a tag where the version follows semating versioning 2.0.0.
+      git tag -a 0.1.0 -m "Add new release 0.1.0"
+      git push -u origin 0.1.0
+
+      # Releast into PyPi.
+      make clean-all
+      python setup.py sdist bdist_wheel
+      twine upload dist/*
