@@ -1,4 +1,4 @@
-|badge-pypiv| |badge-pyv| |badge-cov| |badge-docs| |badge-build|
+|badge-pypiv| |badge-pys| |badge-pyv| |badge-cov| |badge-docs| |badge-build|
 
 Snippy-tldr
 ===========
@@ -19,6 +19,9 @@ To install, run:
 .. _tldr: https://github.com/tldr-pages/tldr
 
 .. |badge-pypiv| image:: https://img.shields.io/pypi/v/snippy-tldr.svg
+   :target: https://pypi.python.org/pypi/snippy-tldr
+
+.. |badge-pys| image:: https://img.shields.io/pypi/status/snippy-tldr.svg
    :target: https://pypi.python.org/pypi/snippy-tldr
 
 .. |badge-pyv| image:: https://img.shields.io/pypi/pyversions/snippy-tldr.svg
