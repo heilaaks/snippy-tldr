@@ -17,10 +17,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Snippy-tldr is a plugin to import tldr man pages to snippy."""
+"""Snippy-tldr is a plugin to import tldr man pages for snippy."""
 
 class SnippyTldr(object):  # pylint: disable=too-few-public-methods
-    """Plugin to import tldr man pages to snippy."""
+    """Plugin to import tldr man pages for snippy."""
 
     def __init__(self):
         print("hello from snippy-tldr")

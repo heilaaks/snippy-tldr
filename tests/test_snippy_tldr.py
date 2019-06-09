@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""test-snippy-tldr: Test snippy plugin to import tldr man pages.."""
+"""test-snippy-tldr: Test snippy plugin to import tldr man pages."""
 
 from snippy_tldr import SnippyTldr
 
