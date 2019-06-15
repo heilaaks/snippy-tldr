@@ -14,6 +14,31 @@ To install, run:
 
     pip install snippy-tldr --user
 
+Usage
+=====
+
+To import default Linux tldr man pages remotely, run:
+
+.. code:: text
+
+    snippy import --plugin tldr
+
+To import defined tldr man pages remotely, run:
+
+.. code:: text
+
+    pip install snippy --user
+    snippy import --plugin tldr --file https://github.com/tldr-pages/tldr/tree/master/pages/osx
+
+To import defined tldr man pages locally, run:
+
+.. code:: text
+
+    mkdir ${HOME}/tmp && cd $_
+    git clone https://github.com/tldr-pages/tldr.git
+    pip install snippy --user
+    snippy import --plugin tldr --file file:.tldr/pages/linux
+
 .. _Snippy: https://github.com/heilaaks/snippy
 
 .. _tldr: https://github.com/tldr-pages/tldr

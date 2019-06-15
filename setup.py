@@ -26,7 +26,9 @@ from setuptools import setup
 with io.open('README.rst', mode='r', encoding='utf-8') as infile:
     README = infile.read()
 
-REQUIRES = ()
+REQUIRES = (
+    'requests'
+)
 
 EXTRAS_DEVEL = (
     'sphinx==1.8.5 ; python_version<="3.4"',
@@ -43,6 +45,7 @@ EXTRAS_TEST = (
     'pytest-cov==2.7.1',
     'pytest-mock==1.10.4',
     'pytest-xdist==1.28.0',
+    'responses==0.10.6',
     'tox==3.12.1'
 )
 

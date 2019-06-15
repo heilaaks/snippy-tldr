@@ -2,3 +2,7 @@
 
 # The class object inheritance is required in Python 2.
 disable=useless-object-inheritance
+
+# The responses module that mocks the requests module is ignored because
+# it causes warnings from it's members.
+ignored-classes=responses

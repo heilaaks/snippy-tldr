@@ -20,6 +20,10 @@
 
 """Snippy-tldr is a plugin to import tldr man pages for snippy."""
 
+import re
+
+import requests
+
 
 def snippy_import_hook(validator, parser, uri):
     """Import notes for Snippy.
@@ -67,6 +71,12 @@ def snippy_import_hook(validator, parser, uri):
 class SnippyTldr(object):  # pylint: disable=too-few-public-methods
     """Plugin to import tldr man pages for snippy."""
 
+    RE_CATCH_FILENAME = re.compile(r'''
+        .*[\/]          # Match greedily the last leading forward slash before the filename.
+        (\S+[.]{1}md)   # Catch filename with the md file extension.
+        [\"]{1}         # Match trailing quotation mark in HTML after filename
+        ''', re.VERBOSE)
+
     def __init__(self, validator, parser, uri):
         self._validate = validator
         self._parse = parser
@@ -105,6 +115,15 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
 
     def _parse_notes(self):
         """Parse notes."""
+
+        response = requests.get('https://github.com/tldr-pages/tldr/tree/master/pages/linux')
+        files = sorted(set(self.RE_CATCH_FILENAME.findall(response.text)))
+        for filename in files:
+            _ = 'https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/' + filename
+        #    #content = urlopen(uri).read().decode('utf-8')
+        #   print(content)
+        #    print(uri)
+        #print("len: %s", len(files))
 
         self._notes.append({
             'category': 'snippet',

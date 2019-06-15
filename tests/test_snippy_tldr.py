@@ -19,6 +19,8 @@
 
 """test-snippy-tldr: Test snippy plugin to import tldr man pages."""
 
+import responses
+
 from snippy_tldr.plugin import SnippyTldr
 
 
@@ -26,9 +28,14 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     """Test snippy-tldr."""
 
     @staticmethod
+    @responses.activate
     def test_001():
         """First test."""
 
+        responses.add(
+            responses.GET,
+            'https://github.com/tldr-pages/tldr/tree/master/pages/linux',
+            json={}, status=200)
         _ = SnippyTldr("test", "test", "test")
 
         assert 1
