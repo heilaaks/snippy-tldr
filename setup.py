@@ -1,8 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  SPDX-License-Identifier: Apache-2.0
-#
+#  Snippy-tldr - A plugin to import tldr man pages for Snippy.
 #  Copyright 2019 Heikki J. Laaksonen  <laaksonen.heikki.j@gmail.com>
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +14,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  SPDX-License-Identifier: Apache-2.0
 
 """setup: Install Snippy tool."""
 
@@ -56,7 +56,7 @@ setup(
     description='Snippy plugin to import tldr man pages.',
     long_description=README,
     long_description_content_type='text/x-rst',
-    py_modules=['snippy_tldr'],
+    packages=['snippy_tldr'],
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     install_requires=REQUIRES,
     zip_safe=False,
@@ -89,7 +89,7 @@ setup(
     test_suite='tests',
     entry_points={
         'snippyplugin': [
-            'tldr = snippy_tldr'
+            'snippy = snippy_tldr.plugin'
         ]
     }
 )

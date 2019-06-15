@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  SPDX-License-Identifier: Apache-2.0
-#
+#  Snippy-tldr - A plugin to import tldr man pages for Snippy.
 #  Copyright 2019 Heikki J. Laaksonen  <laaksonen.heikki.j@gmail.com>
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +14,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  SPDX-License-Identifier: Apache-2.0
 
 """test-snippy-tldr: Test snippy plugin to import tldr man pages."""
 
-from snippy_tldr import SnippyTldr
+from snippy_tldr.plugin import SnippyTldr
 
 
 class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
@@ -28,7 +29,6 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     def test_001():
         """First test."""
 
-        tldr = SnippyTldr()
-        tldr.run()
+        _ = SnippyTldr("test", "test", "test")
 
         assert 1
