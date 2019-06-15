@@ -51,7 +51,7 @@ docs:
 	make -C docs html
 
 test:
-	$(PYTHON) -m pytest -x ${COVERAGE} --cov-report html
+	$(PYTHON) -m pytest -x ${COVERAGE}
 
 test-tox:
 	tox
