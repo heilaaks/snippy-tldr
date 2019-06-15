@@ -28,7 +28,7 @@ upgrade:
 	$(PIP) install --upgrade $(QUIET) $(INSTALL_USER) .
 
 uninstall:
-	$(PIP) uninstall $(QUIET) --yes snippy
+	$(PIP) uninstall $(QUIET) --yes snippy-tldr
 
 upgrade-wheel:
 	test -x "$(shell which pip)" || $(PYTHON) -m ensurepip $(INSTALL_USER)
@@ -60,7 +60,7 @@ coverage:
 	$(PYTHON) -m pytest ${COVERAGE} --cov-report html
 
 lint:
-	$(PYTHON) -m pylint --jobs=0 snippy_tldr.py
+	$(PYTHON) -m pylint --jobs=0 snippy_tldr/
 	$(PYTHON) -m pylint --jobs=0 tests/
 
 clean: clean-build clean-pyc clean-test
