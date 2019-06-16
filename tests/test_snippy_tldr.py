@@ -34,8 +34,23 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
 
         responses.add(
             responses.GET,
-            'https://github.com/tldr-pages/tldr/tree/master/pages/linux',
-            json={}, status=200)
-        _ = SnippyTldr("test", "test", "test")
+            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
+            json={},
+            status=200,
+        )
+        _ = SnippyTldr(Logger(), "test", "test", "test")
 
         assert 1
+
+
+class Logger(object):  # pylint: disable=too-few-public-methods
+    """Logger mock."""
+
+    def debug(self, *args, **kwargs):
+        """Dummy debug method."""
+
+
+class Const(object):  # pylint: disable=too-few-public-methods
+    """Constants mock."""
+
+    SNIPPET_COMMENT = "  #  "
