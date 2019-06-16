@@ -17,24 +17,35 @@ To install, run:
 Usage
 =====
 
-To import default Linux tldr man pages remotely, run:
+To import Linux tldr man pages remotely, run:
 
 .. code:: text
 
     snippy import --plugin tldr
 
-To import defined tldr man pages remotely, run:
+To import tldr man pages remotely, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file https://github.com/tldr-pages/tldr/tree/master/pages/osx
 
-To import defined tldr man pages locally, run:
+To import one tldr man page remotely, run:
 
 .. code:: text
 
-    git clone https://github.com/tldr-pages/tldr.git
+    snippy import --plugin tldr --file https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/apk.md
+
+To import tldr man pages locally, run:
+
+.. code:: text
+
     snippy import --plugin tldr --file file:./tldr/pages/linux
+
+To import one tldr man page locally, run:
+
+.. code:: text
+
+    snippy import --plugin tldr --file file:./tldr/pages/linux/linux/apk.md
 
 .. _Snippy: https://github.com/heilaaks/snippy
 
