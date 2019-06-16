@@ -24,7 +24,11 @@ import re
 
 import requests
 
-from snippy.constants import Constants as Const
+try:
+    from snippy.plugins import Const
+    from snippy.plugins import Parser
+except ImportError:
+    pass
 
 
 def snippy_import_hook(logger, uri, validator, parser):
@@ -139,6 +143,20 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         re.MULTILINE | re.VERBOSE,
     )
 
+    RE_MATCH_MKDN_BLOCK_QUOTE_TOKEN = re.compile(
+        r"""
+        \n[>]{1}  # Match Markdown block quote after newline.
+        """,
+        re.MULTILINE | re.VERBOSE,
+    )
+
+    RE_CATCH_FIRST_SENTENCE = re.compile(
+        r"""
+        ^(?P<sentence>.*?[\.!?])  # Match the first sentence.
+        """,
+        re.MULTILINE | re.VERBOSE,
+    )
+
     def __init__(self, logger, uri, validator, parser):
         self._logger = logger
         self._validate = validator
@@ -183,10 +201,10 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
             "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
         )
         files = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
-        self._logger.debug("scanned: %s :tld notes", len(files))
+        self._logger.debug("scanned: %s :tldr man pages", len(files))
         files = files[:4]
         for filename in files:
-            print("parse page: %s" % filename)
+            # print("parse page: %s" % filename)
             tldr_page = (
                 "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/"
                 + filename
@@ -196,8 +214,8 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
                 self._notes.append(note)
             else:
                 self._logger.debug("failed to parse tldr man page", tldr_page)
-        print(self._notes)
-        print("len: %s", len(self._notes))
+        # print(self._notes)
+        # print("len: %s", len(self._notes))
 
     def _parse_tldr_page(self, page, source):
         """Parse and valudate one tldr man page.
@@ -220,9 +238,9 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         snippet["description"] = self._read_tldr_description(page)
         snippet["name"] = self._read_tldr_name(page)
         snippet["source"] = source
-        print("===")
-        print(snippet)
-        print("===")
+        # print("===")
+        # print(snippet)
+        # print("===")
 
         return snippet
 
@@ -241,7 +259,7 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         if match:
             snippets = self.RE_CATCH_TLDR_SNIPPET.findall(match.group("snippets"))
             if any(snippets):
-                snippets = self._beautify_snippets(snippets)
+                snippets = self._format_list(snippets)
                 for snippet in snippets:
                     match = self.RE_CATCH_TLDR_SNIPPET_COMMAND.search(snippet)
                     if match:
@@ -263,7 +281,7 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         else:
             self._logger.debug("parser did not find tldr snippets at all: %s", page)
 
-        return tuple(data)
+        return Parser.format_data(Const.SNIPPET, data)
 
     def _read_tldr_brief(self, page):
         """Parse and format tldr man page ``brief`` attribute.
@@ -278,9 +296,9 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         brief = ""
         match = self.RE_CATCH_TLDR_DESCRIPTION.search(page)
         if match:
-            brief = match.group("description").replace("\n", " ").replace("\r", "")
+            brief = self._format_brief(match.group("description"))
 
-        return brief
+        return Parser.format_brief(Const.SNIPPET, brief)
 
     def _read_tldr_description(self, page):
         """Parse and format tldr man page ``description`` attribute.
@@ -295,11 +313,9 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         description = ""
         match = self.RE_CATCH_TLDR_DESCRIPTION.search(page)
         if match:
-            description = (
-                match.group("description").replace("\n", " ").replace("\r", "")
-            )
+            description = self._format_description(match.group("description"))
 
-        return description
+        return Parser.format_description(Const.SNIPPET, description)
 
     def _read_tldr_name(self, page):
         """Parse and format tldr man page ``name`` attribute.
@@ -316,23 +332,63 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         if match:
             name = match.group("header")
 
-        return name
+        return Parser.format_name(Const.SNIPPET, name)
 
     @staticmethod
-    def _beautify_snippets(snippets):
-        """Remove empty strings and trim newlines from list of tldr snippets.
+    def _format_list(list_):
+        """Remove empty strings and trim newlines from a list.
 
         Args
-            snippets (list): List of raw capture from tldr man page snippet.
+            list_ (list): List of strings.
 
         Returns:
             list: Formatted list of tldr man page snippets.
         """
 
-        snippets = map(Const.TEXT_TYPE.strip, snippets)
-        snippets = list(filter(None, snippets))
+        list_ = map(Const.TEXT_TYPE.strip, list_)
+        list_ = list(filter(None, list_))
 
-        return snippets
+        return list_
+
+    def _format_brief(self, brief):
+        """Format brief description for tldr man page.
+
+        Remove additional Markdown tokens like '>' and limit the length of
+        the string to be more suitable for content ``brief`` attribute.
+
+        Args
+            brief (str): Brief read from the tldr man page.
+
+        Returns:
+            str: Tldr specific format for the ``brief`` attribute.
+        """
+
+        brief = self.RE_MATCH_MKDN_BLOCK_QUOTE_TOKEN.sub("", brief)
+        match = self.RE_CATCH_FIRST_SENTENCE.search(brief)
+        if match:
+            brief = self._limit_string(match.group("sentence"), 40)
+
+        return brief
+
+    def _format_description(self, description):
+        """Format tldr man page description.
+
+        Remove additional Markdown tokens like '>' from the description.
+
+        Args
+            description (str): Description read from the tldr man page.
+
+        Returns:
+            str: Tldr specific format for the ``description`` attribute.
+        """
+
+        return self.RE_MATCH_MKDN_BLOCK_QUOTE_TOKEN.sub("", description)
+
+    @staticmethod
+    def _limit_string(string_, len_):
+        """Limit the string length"""
+
+        return string_ if len(string_) <= len_ else string_[0 : len_ - 3] + "..."
 
     # Python 3 compatible iterator [1].
     #
