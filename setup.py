@@ -26,7 +26,10 @@ from setuptools import setup
 with io.open("README.rst", mode="r", encoding="utf-8") as infile:
     README = infile.read()
 
-REQUIRES = "requests"
+REQUIRES = (
+    "requests",
+    "snippy==0.10.0"
+)
 
 EXTRAS_DEVEL = (
     "black",
