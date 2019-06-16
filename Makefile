@@ -63,6 +63,11 @@ lint:
 	$(PYTHON) -m pylint --jobs=0 snippy_tldr/
 	$(PYTHON) -m pylint --jobs=0 tests/
 
+format:
+	black snippy_tldr
+	black tests
+	black setup.py
+
 clean: clean-build clean-pyc clean-test
 
 clean-all: clean

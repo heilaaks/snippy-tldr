@@ -1,4 +1,4 @@
-|badge-pypiv| |badge-pys| |badge-pyv| |badge-cov| |badge-docs| |badge-build|
+|badge-pypiv| |badge-pys| |badge-pyv| |badge-cov| |badge-docs| |badge-build| |badge-black|
 
 Snippy-tldr
 ===========
@@ -68,3 +68,6 @@ To import one tldr man page locally, run:
 
 .. |badge-build| image:: https://travis-ci.org/heilaaks/snippy-tldr.svg?branch=master
    :target: https://travis-ci.org/heilaaks/snippy-tldr
+
+.. |badge-black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/python/black
