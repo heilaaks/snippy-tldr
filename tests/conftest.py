@@ -18,3 +18,27 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 """conftest: Fixtures for pytest."""
+
+import pytest
+
+
+@pytest.fixture(scope="function", name="mock-snippy")
+def mock_snippy(mocker):
+    """Mock Snippy."""
+
+    # mocker.patch.object(Const, 'SNIPPET', return_value='snippet')
+    mocker.patch.object(Parser, "format_data", return_value=[])
+
+
+class Const(object):  # pylint: disable=too-few-public-methods
+    """Dummy mock class."""
+
+    SNIPPET = "snippet"
+
+
+class Parser(object):  # pylint: disable=too-few-public-methods
+    """Dummy mock class."""
+
+    @classmethod
+    def format_data(cls, category, value):
+        """Dummy method."""

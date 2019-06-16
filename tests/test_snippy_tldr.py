@@ -19,6 +19,7 @@
 
 """test-snippy-tldr: Test snippy plugin to import tldr man pages."""
 
+import pytest
 import responses
 
 from snippy_tldr.plugin import SnippyTldr
@@ -29,6 +30,7 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
 
     @staticmethod
     @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
     def test_001():
         """First test."""
 
