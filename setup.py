@@ -26,27 +26,24 @@ from setuptools import setup
 with io.open("README.rst", mode="r", encoding="utf-8") as infile:
     README = infile.read()
 
-REQUIRES = (
-    "requests",
-    "snippy==0.10.0"
-)
+REQUIRES = ("requests", "snippy>=0.10.0")
 
 EXTRAS_DEVEL = (
     "black",
     'sphinx==1.8.5 ; python_version<="3.4"',
-    'sphinx==2.0.1 ; python_version>"3.4"',
+    'sphinx==2.1.1 ; python_version>"3.4"',
     "sphinx_rtd_theme==0.4.3",
 )
 
 EXTRAS_TEST = (
     "flake8==3.7.7",
-    "pluggy==0.11.0",
+    "pluggy==0.12.0",
     'pylint==1.9.4 ; python_version=="2.7.*"',
     'pylint==2.3.1 ; python_version>"2.7"',
-    "pytest==4.5.0",
+    "pytest==4.6.3",
     "pytest-cov==2.7.1",
     "pytest-mock==1.10.4",
-    "pytest-xdist==1.28.0",
+    "pytest-xdist==1.29.0",
     "responses==0.10.6",
     "tox==3.12.1",
 )
