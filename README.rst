@@ -39,13 +39,13 @@ To import tldr man pages locally, run:
 
 .. code:: text
 
-    snippy import --plugin tldr --file file:./tldr/pages/linux
+    snippy import --plugin tldr --file ./tldr/pages/linux
 
 To import one tldr man page locally, run:
 
 .. code:: text
 
-    snippy import --plugin tldr --file file:./tldr/pages/linux/linux/apk.md
+    snippy import --plugin tldr --file ./tldr/pages/linux/apk.md
 
 .. _Snippy: https://github.com/heilaaks/snippy
 

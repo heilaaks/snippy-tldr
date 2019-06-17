@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #  Snippy-tldr - A plugin to import tldr man pages for Snippy.
@@ -18,9 +17,16 @@
 #
 #  SPDX-License-Identifier: Apache-2.0
 
-"""Snippy-tldr is a plugin to import tldr man pages for snippy."""
+"""Snippy-tldr is a plugin to import tldr man pages for Snippy."""
 
+import os
 import re
+
+try:
+    from urllib.parse import urljoin
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urljoin, urlparse
 
 import requests
 
@@ -74,17 +80,26 @@ def snippy_import_hook(logger, uri, validator, parser):
     return tldr
 
 
-class SnippyTldr(object):  # pylint: disable=too-few-public-methods
+class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     """Plugin to import tldr man pages for snippy."""
 
-    # A Snippy tool specific separator for snippet and comment.
-    SNIPPET_COMMENT = "  #  "
+    TLDR_URI = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+    TLDR_PAGES = ("common", "linux", "osx", "sunos", "windows")
 
     RE_CATCH_TLDR_FILENAME = re.compile(
         r"""
         .*[\/]         # Match greedily the last leading forward slash before the filename.
         (\S+[.]{1}md)  # Catch filename with the md file extension.
         [\"]{1}        # Match trailing quotation mark in HTML after filename
+        """,
+        re.VERBOSE,
+    )
+
+    RE_CATCH_TLDR_PAGE = re.compile(
+        r"""
+        /tldr-pages/tldr/tree/\S+/pages/  # Match HTML page to find the pages.
+        (?P<page>.*)                      # Catch tldr page.
+        ["]                               # Match trailing quotation mark.
         """,
         re.VERBOSE,
     )
@@ -161,33 +176,39 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         self._logger = logger
         self._validate = validator
         self._parse = parser
-        self._uri = uri
-        self._notes = []
+        self._uri = uri if uri else self.TLDR_URI
+        self._uri_scheme = urlparse(self._uri).scheme
+        self._uri_path = urlparse(self._uri).path
+        self._snippets = []
         self._i = 0
+
+        print("uri: %s", self._uri)
+        print("scheme: %s", self._uri_scheme)
+        print("path: %s", self._uri_path)
 
         self._read_tldr_pages()
 
     def __len__(self):
-        """Return count of the notes.
+        """Return count of the snippets.
 
         Returns:
             int: The len of the iterator object.
         """
 
-        return len(self._notes)
+        return len(self._snippets)
 
     def __iter__(self):
         return self
 
     def next(self):
-        """Return the next note.
+        """Return the next snippet.
 
         Returns:
             dict: The next note in interator.
         """
 
         if self._i < len(self):
-            note = self._notes[self._i]
+            note = self._snippets[self._i]
             self._i += 1
         else:
             raise StopIteration
@@ -197,25 +218,110 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
     def _read_tldr_pages(self):
         """Read tldr man pages."""
 
-        response = requests.get(
-            "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
-        )
-        files = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
-        self._logger.debug("scanned: %s :tldr man pages", len(files))
-        files = files[:4]
-        for filename in files:
-            # print("parse page: %s" % filename)
-            tldr_page = (
-                "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/"
-                + filename
-            )
-            note = self._parse_tldr_page(requests.get(tldr_page).text, tldr_page)
-            if note:
-                self._notes.append(note)
+        filenames = self._get_tlrd_filenames(self._uri)
+        for page in filenames:
+            self._read_page(page, filenames[page])
+
+    def _get_tlrd_filenames(self, uri):
+        """Get all tldr filenames.
+
+        Read all tldr man page snippet filenames under the URI.
+
+        Args:
+            uri (str): URI where the tldr snippets are read.
+
+        Returns:
+            dict: Tldr pages and files in each page.
+        """
+
+        filenames = {}
+        last_object = os.path.basename(os.path.normpath(uri))
+        if last_object == "pages":
+            self._logger.debug("read all tldr man pages from: %s", uri)
+            pages = self._get_tldr_pages()
+            for page in pages:
+                print("page: %s" % page)
+                self._get_tlrd_filenames(page)
+        elif ".md" in last_object:
+            self._logger.debug("read one tldr man page snippet: %s", uri)
+            print("file: %s" % uri)
+        elif uri in ("/tldr/pages", "tldr-pages/tldr"):
+            self._logger.debug("read tldr man page: %s", uri)
+            print("group: %s" % uri)
+        else:
+            self._logger.debug("unknown tldr man page path: %s", uri)
+
+        return filenames
+
+    def _get_tldr_pages(self):
+        """Read tldr pages from URI or file path.
+
+        The give URI is pointing to ``tldr/pages/``. The URI may be a remote
+        or localhost URI. There can be any amount of pages under the URI but
+        only the known tldr pages are read. Unknown directories from the URI
+        given by user are discarded.
+
+        The returned list of tldr pages is in format that allows reading the
+        tldr snippets under each tldr page.
+
+        Returns:
+            list: Tldr man pages with URI or file path.
+        """
+
+        pages = []
+        if "http" in self._uri_scheme:
+            html = requests.get(self._uri).text
+            pages = self.RE_CATCH_TLDR_PAGE.findall(html)
+        else:
+            try:
+                pages = os.listdir(self._uri_path)
+            except FileNotFoundError:
+                self._logger.debug(
+                    "localhost path was not accessible: %s", self._uri_path
+                )
+
+        # Pick only the known tldr pages and format the list of pages to be
+        # file paths or URLs to be directly usable by caller.
+        pages = sorted(list(set(self.TLDR_PAGES) & set(pages)))
+        pages_ = []
+        for page in pages:
+            if "http" in self._uri_scheme:
+                pages_.append(urljoin(self._uri, page))
             else:
-                self._logger.debug("failed to parse tldr man page", tldr_page)
-        # print(self._notes)
-        # print("len: %s", len(self._notes))
+                pages_.append(os.path.join(self._uri, page))
+        self._logger.debug("parsed tldr pages: %s", pages)
+
+        return pages_
+
+    def _read_page(self, page, files):
+        """Read snippets from the tldr man page.
+
+        Args:
+            page (str): Name of the tldr page.
+            filenames (tuple): List of filenames under the page.
+        """
+
+        for uri in files:
+            tldr_page = self._read_tldr_file(uri)
+            snippet = self._parse_tldr_page(tldr_page, page)
+            if snippet:
+                self._snippets.append(snippet)
+            else:
+                self._logger.debug(
+                    "failed to parse tldr man page: %s :from: %s", uri, tldr_page
+                )
+
+    def _read_tldr_file(self, uri):
+        """Read tldr file."""
+
+        tldr_page = ""
+        if "http" in self._uri_scheme:
+            tldr_page = requests.get(uri).text
+        else:
+            with open(uri, "r") as infile:
+                tldr_page = infile.read()
+
+        return tldr_page
 
     def _parse_tldr_page(self, page, source):
         """Parse and valudate one tldr man page.
@@ -238,9 +344,6 @@ class SnippyTldr(object):  # pylint: disable=too-few-public-methods
         snippet["description"] = self._read_tldr_description(page)
         snippet["name"] = self._read_tldr_name(page)
         snippet["source"] = source
-        # print("===")
-        # print(snippet)
-        # print("===")
 
         return snippet
 

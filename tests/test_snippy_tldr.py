@@ -44,6 +44,39 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
 
         assert 1
 
+    @staticmethod
+    def test_002():
+        """First test."""
+
+        # Test with
+        #
+        #  Fetch pages from URI
+        #       https://github.com/tldr-pages/tldr/tree/master/pages/    # Trailing slash
+        #       https://github.com/tldr-pages/tldr/tree/0.0.1/pages
+        #       https://github.com/tldr-pages/tldr/tree/italian/pages
+        #
+        # Fetch pages localhost uri
+        #       '../tldr/pages/'
+        #       './tldr/pages/'
+        #       './tldr/pages'
+        #       '.'
+        #
+        # Fetch pages localhost uri
+        #       uri = 'file:../tldr/pages/linux/'
+        #       uri = 'file:../tldr/pages'
+        #       uri = 'file:../tldr/pages/linux/alpine.md'
+        #       uri = 'file:../tld'
+
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        # uri = '../tldr/pages/linux/'
+        # uri = '../tldr/pages/'
+        # uri = 'file:../tldr/pages/linux/'
+        # uri = 'file:../tldr/pages'
+        # uri = 'file:../tldr/pages/linux/alpine.md'
+        # uri = 'file:../tld'
+        SnippyTldr(Logger(), uri, "test", "test")
+
 
 class Logger(object):  # pylint: disable=too-few-public-methods
     """Logger mock."""
