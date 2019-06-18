@@ -24,6 +24,15 @@ import responses
 
 from snippy_tldr.plugin import SnippyTldr
 
+# The responses module does not seem to work when responses are set
+# in a for loop by iterating the value of a list. It seems that the
+# module takes a reference to value (pointer to list) and that gets
+# updated in the responses module in every loop.
+#
+# This causes the responses always to use the last value in a loop
+# as a first and only response. The iteration must be made without
+# actually iterating the values but the size of the list.
+
 
 class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     """Test snippy-tldr."""
@@ -32,20 +41,67 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
     @responses.activate
     @pytest.mark.usefixtures("mock-snippy")
     def test_001():
-        """First test."""
+        """Test reading remote tldr pages."""
 
+        # Read default tldr man page when user did not use ``--file`` option.
         responses.add(
             responses.GET,
             "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
             json={},
             status=200,
         )
-        _ = SnippyTldr(Logger(), "test", "test", "test")
+        _ = SnippyTldr(Logger(), "", None, None)
+        assert len(responses.calls) == 1
+        responses.reset()
+
+        # Read all tldr pages when the URI does not have trailing slash.
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        body = (
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+        )
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/master/pages",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/sunos",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/windows",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        for _ in range(len(requests)):
+            responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 5
+        responses.reset()
+
+        # Test reading all tldr pages under 'pt-BR' translation.
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR"
+        body = (
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.pt-BR/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.pt-BR/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.pt-BR/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.pt-BR/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+        )
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/osx",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/sunos",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/windows",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        for _ in range(len(requests)):
+            responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 5
 
         assert 1
 
     @staticmethod
-    def test_002():
+    @pytest.mark.skip(reason="no way of currently testing this")
+    def test_999():
         """First test."""
 
         # Test with
@@ -67,8 +123,10 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         #       uri = 'file:../tldr/pages/linux/alpine.md'
         #       uri = 'file:../tld'
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
         uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'
