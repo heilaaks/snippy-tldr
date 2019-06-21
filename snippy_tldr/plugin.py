@@ -92,6 +92,13 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         r"pages(?:\.[a-zA-Z0.9-]+)?"
     )  # Match examples 'pages', 'pages.pt-BR' and 'pages.it'.
 
+    RE_MATCH_GITHUB_TREE_URI = re.compile(
+        r"""
+        http[s]?://github.com/tldr-pages/tldr/tree
+        """,
+        re.VERBOSE,
+    )
+
     RE_CATCH_TLDR_PAGE_HTML = re.compile(
         r"""
         /tldr-pages/tldr/tree/  # Match part of an URL in HTML page.
@@ -306,7 +313,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             else:
                 print("missed page from uri")
                 self._logger.debug("tldr page was not read from uri: %s", uri)
-        elif any(s in uri for s in ("/tldr/pages", "tldr-pages/tldr")):
+        elif any(path in uri for path in ("/tldr/pages", "tldr-pages/tldr")):
             self._logger.debug("read tldr man page: %s", uri)
             self._read_tldr_page_filenames(uri)
         else:
@@ -403,30 +410,35 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             page (str): Name of the tldr page.
         """
 
-        tldr_page = ""
+        snippet = ""
         if "http" in self._uri_scheme:
-            tldr_page = requests.get(uri.strip("/")).text
+            uri_ = self.RE_MATCH_GITHUB_TREE_URI.sub(
+                "https://raw.githubusercontent.com/tldr-pages/tldr", uri
+            )
+            tldr = requests.get(uri_.strip("/")).text
         else:
             with open(uri, "r") as infile:
-                tldr_page = infile.read()
+                tldr = infile.read()
 
-        snippet = self._parse_tldr_page(tldr_page, page)
+        snippet = self._parse_tldr_page(uri, page, tldr)
+        print(snippet)
         if snippet:
             self._snippets.append(snippet)
         else:
             self._logger.debug(
-                "failed to parse tldr man page: %s :from: %s", uri, tldr_page
+                "failed to parse tldr man page: %s :from: %s", uri, snippet
             )
 
-    def _parse_tldr_page(self, page, source):
+    def _parse_tldr_page(self, source, page, tldr):
         """Parse and valudate one tldr man page.
 
         The method parses and validates one tldr man page to a snippet
         data structure for Snippy tool.
 
         Args
-            page (str): A tldr man page in text string.
             source (str): A link where the tldr man page was read.
+            page (str): The tldr page.
+            tldr (str): A tldr snippet in a text string.
 
         Returns:
             dict: Validated JSON structure from a tldr man page.
@@ -434,26 +446,28 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         snippet = {}
         snippet["category"] = Const.SNIPPET
-        snippet["data"] = self._read_tldr_data(page)
-        snippet["brief"] = self._read_tldr_brief(page)
-        snippet["description"] = self._read_tldr_description(page)
-        snippet["name"] = self._read_tldr_name(page)
+        snippet["data"] = self._read_tldr_data(tldr)
+        snippet["brief"] = self._read_tldr_brief(tldr)
+        snippet["description"] = self._read_tldr_description(tldr)
+        snippet["name"] = self._read_tldr_name(tldr)
+        snippet["groups"] = Parser.format_groups(Const.SNIPPET, page)
+        snippet["tags"] = Parser.format_tags(Const.SNIPPET, page)
         snippet["source"] = source
 
         return snippet
 
-    def _read_tldr_data(self, page):
+    def _read_tldr_data(self, tldr):
         """Parse and format tldr man page ``data`` attribute.
 
         Args
-            page (str): A tldr man page in utf-8 encoded text string.
+            tldr (str): A tldr snippet in a text string.
 
         Returns:
             tuple: Formatted list of tldr man page snippets.
         """
 
         data = []
-        match = self.RE_CATCH_TLDR_SNIPPETS.search(page)
+        match = self.RE_CATCH_TLDR_SNIPPETS.search(tldr)
         if match:
             snippets = self.RE_CATCH_TLDR_SNIPPET.findall(match.group("snippets"))
             if any(snippets):
@@ -477,56 +491,57 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                     snippets,
                 )
         else:
-            self._logger.debug("parser did not find tldr snippets at all: %s", page)
+            self._logger.debug("parser did not find tldr snippets at all: %s", tldr)
 
+        print("data %s" % data)
         return Parser.format_data(Const.SNIPPET, data)
 
-    def _read_tldr_brief(self, page):
+    def _read_tldr_brief(self, tldr):
         """Parse and format tldr man page ``brief`` attribute.
 
         Args
-            page (str): A tldr man page in utf-8 encoded text string.
+            tldr (str): A tldr snippet in a text string.
 
         Returns:
             str: Utf-8 encoded unicode string.
         """
 
         brief = ""
-        match = self.RE_CATCH_TLDR_DESCRIPTION.search(page)
+        match = self.RE_CATCH_TLDR_DESCRIPTION.search(tldr)
         if match:
             brief = self._format_brief(match.group("description"))
 
         return Parser.format_brief(Const.SNIPPET, brief)
 
-    def _read_tldr_description(self, page):
+    def _read_tldr_description(self, tldr):
         """Parse and format tldr man page ``description`` attribute.
 
         Args
-            page (str): A tldr man page in utf-8 encoded text string.
+            tldr (str): A tldr snippet in a text string.
 
         Returns:
             str: Utf-8 encoded unicode string.
         """
 
         description = ""
-        match = self.RE_CATCH_TLDR_DESCRIPTION.search(page)
+        match = self.RE_CATCH_TLDR_DESCRIPTION.search(tldr)
         if match:
             description = self._format_description(match.group("description"))
 
         return Parser.format_description(Const.SNIPPET, description)
 
-    def _read_tldr_name(self, page):
+    def _read_tldr_name(self, tldr):
         """Parse and format tldr man page ``name`` attribute.
 
         Args
-            page (str): A tldr man page in utf-8 encoded text string.
+            tldr (str): A tldr snippet in a text string.
 
         Returns:
             str: Utf-8 encoded unicode string.
         """
 
         name = ""
-        match = self.RE_CATCH_TLDR_HEADER.search(page)
+        match = self.RE_CATCH_TLDR_HEADER.search(tldr)
         if match:
             name = match.group("header")
 

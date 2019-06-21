@@ -98,15 +98,17 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         assert len(responses.calls) == 5
 
         # Test reading one tldr snippet.
-        uri = (
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
+        uri_cli = (
             "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux/alpine.md"
         )
-        responses.add(responses.GET, uri, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
-        responses.add(responses.GET, uri, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
+        uri_cli = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
 
     @staticmethod
     @pytest.mark.skip(reason="no way of currently testing this")
@@ -136,7 +138,7 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
         uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'
