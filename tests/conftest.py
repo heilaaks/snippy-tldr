@@ -26,8 +26,10 @@ import pytest
 def mock_snippy(mocker):
     """Mock Snippy."""
 
-    # mocker.patch.object(Const, 'SNIPPET', return_value='snippet')
     mocker.patch.object(Parser, "format_data", return_value=[])
+    mocker.patch.object(Parser, "format_brief", return_value="")
+    mocker.patch.object(Parser, "format_description", return_value="")
+    mocker.patch.object(Parser, "format_name", return_value="")
 
 
 class Const(object):  # pylint: disable=too-few-public-methods
@@ -41,4 +43,16 @@ class Parser(object):  # pylint: disable=too-few-public-methods
 
     @classmethod
     def format_data(cls, category, value):
-        """Dummy method."""
+        """Dummy method for mock."""
+
+    @classmethod
+    def format_brief(cls, category, value):
+        """Dummy method for mock."""
+
+    @classmethod
+    def format_description(cls, category, value):
+        """Dummy method for mock."""
+
+    @classmethod
+    def format_name(cls, category, value):
+        """Dummy method for mock."""

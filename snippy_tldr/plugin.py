@@ -30,11 +30,13 @@ except ImportError:
 
 import requests
 
+
 try:
     from snippy.plugins import Const
     from snippy.plugins import Parser
 except ImportError:
-    pass
+    from tests.conftest import Const
+    from tests.conftest import Parser
 
 
 def snippy_import_hook(logger, uri, validator, parser):
@@ -97,6 +99,15 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         %s/                     # Match tldr pages and page translations.
         (?P<page>.*?)           # Catch tldr page ungreedily.
         ["]{1}                  # Match trailing quotation mark.
+        """
+        % MATCH_TLDR_PAGES,
+        re.VERBOSE,
+    )
+
+    RE_CATCH_TLDR_PAGE_URI = re.compile(
+        r"""
+        /%s/            # Match tldr pages path.
+        (?P<page>.*?)/  # Catch tldr page.
         """
         % MATCH_TLDR_PAGES,
         re.VERBOSE,
@@ -251,7 +262,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         uri_ = uri if uri else self.TLDR_DEFAULT_URI
         _, file_extension = os.path.splitext(urlparse(uri_).path)
         print("extension: %s" % file_extension)
-        if file_extension != "md" and not uri_.endswith("/"):
+        if file_extension != ".md" and not uri_.endswith("/"):
             uri_ = uri_ + "/"
 
         return uri_
@@ -285,8 +296,16 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 print("page: %s" % page)
                 self._get_tlrd_filenames(page)
         elif ".md" in last_object:
-            self._logger.debug("read one tldr man page snippet: %s", uri)
             print("file: %s" % uri)
+            self._logger.debug("read one tldr man page snippet: %s", uri)
+            match = self.RE_CATCH_TLDR_PAGE_URI.search(uri)
+            if match:
+                page = match.group("page")
+                print("matched page: %s" % page)
+                self._read_tldr_file(uri, page)
+            else:
+                print("missed page from uri")
+                self._logger.debug("tldr page was not read from uri: %s", uri)
         elif any(s in uri for s in ("/tldr/pages", "tldr-pages/tldr")):
             self._logger.debug("read tldr man page: %s", uri)
             self._read_tldr_page_filenames(uri)
@@ -374,17 +393,15 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         """
 
         for uri in files:
-            tldr_page = self._read_tldr_file(uri)
-            snippet = self._parse_tldr_page(tldr_page, page)
-            if snippet:
-                self._snippets.append(snippet)
-            else:
-                self._logger.debug(
-                    "failed to parse tldr man page: %s :from: %s", uri, tldr_page
-                )
+            self._read_tldr_file(uri, page)
 
-    def _read_tldr_file(self, uri):
-        """Read tldr file."""
+    def _read_tldr_file(self, uri, page):
+        """Read tldr file.
+
+        Args:
+            uri (str): URI where the tldr snippet is read.
+            page (str): Name of the tldr page.
+        """
 
         tldr_page = ""
         if "http" in self._uri_scheme:
@@ -393,7 +410,13 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             with open(uri, "r") as infile:
                 tldr_page = infile.read()
 
-        return tldr_page
+        snippet = self._parse_tldr_page(tldr_page, page)
+        if snippet:
+            self._snippets.append(snippet)
+        else:
+            self._logger.debug(
+                "failed to parse tldr man page: %s :from: %s", uri, tldr_page
+            )
 
     def _parse_tldr_page(self, page, source):
         """Parse and valudate one tldr man page.

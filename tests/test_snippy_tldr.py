@@ -97,7 +97,16 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         _ = SnippyTldr(Logger(), uri, None, None)
         assert len(responses.calls) == 5
 
-        assert 1
+        # Test reading one tldr snippet.
+        uri = (
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux/alpine.md"
+        )
+        responses.add(responses.GET, uri, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
+        responses.add(responses.GET, uri, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
 
     @staticmethod
     @pytest.mark.skip(reason="no way of currently testing this")
@@ -125,8 +134,9 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
 
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
-        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'
@@ -147,3 +157,4 @@ class Const(object):  # pylint: disable=too-few-public-methods
     """Constants mock."""
 
     SNIPPET_COMMENT = "  #  "
+    SNIPPET = "snippet"
