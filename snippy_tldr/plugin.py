@@ -51,38 +51,36 @@ def snippy_import_hook(logger, uri, validator, parser):
 
     The ``tldr man pages`` project seems use term ``page`` loosely in different
     contexts. In order to try to provide a bit more maintainable code, a more
-    detailed terms have been invented for this project.
+    detailed terms have been invented for this project::
 
-    ```
-    # Tldr man pages hierarchical layers.
-    #
-    # translations        pages        tldr files
-    # ============       =======       ==========
-      pages.it     +
-      pages.pt-BR  |
-      pages.zh     |
-      pages        +---+ common  +
-                       | linux   |
-                       | osx     |
-                       | sunos   |
-                       + windows +---+
-                                     |
-                                     + alpine.md
-                                       apk.md
-    ```
+        # Tldr man pages hierarchical layers.
+        #
+        # translations        pages        tldr files
+        # ============       =======       ==========
+          pages.it     +
+          pages.pt-BR  |
+          pages.zh     |
+          pages        +---+ common  +
+                           | linux   |
+                           | osx     |
+                           | sunos   |
+                           + windows +---+
+                                         |
+                                         + alpine.md
+                                           apk.md
 
-    ==================  ===================================================================
+    ==================  ======================================================================
     Term                Decscription
-    ==================  ===================================================================
+    ==================  ======================================================================
     *page*              |  A single tldr page like ``common``, ``linux`` or ``windows``.
 
     *pages*             |  All tldr pages under one translation.
 
-    *translation*       |  Tldr man page page translation like ``pages.it`` or ``pages.zh``.
+    *translation*       |  A tldr man page page translation like ``pages.it`` or ``pages.zh``.
 
-    *tldr files         |  A single tldr man page Markdown file. The term ``tldr man page``
-                        |  is not used in order to avoid confusion with term ``page``.
-    ==================  ===================================================================
+    *tldr files*        |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
+                        |  avoid confusion with term ``page``.
+    ==================  ======================================================================
 
     Args
         validate (obj): A ``SnippyNotesValidator`` object to validate JSON notes.
@@ -265,10 +263,12 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         return self
 
     def next(self):
-        """Return the next snippet.
+        """Return the next tldr man page.
+
+        The returned pages are pre-formatted for Snippy tool.
 
         Returns:
-            dict: The next note in interator.
+            dict: The next tldr mage in interator.
         """
 
         if self._i < len(self):

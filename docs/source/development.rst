@@ -68,3 +68,19 @@ Relasing
       make clean-all
       python setup.py sdist bdist_wheel
       twine upload dist/*
+
+Modules
+-------
+
+snippy_tldr.plugin
+~~~~~~~~~~~~~~~~~~
+
+Description
+```````````
+
+Design
+``````
+
+.. automodule:: snippy_tldr.plugin
+   :members:
+   :member-order: bysource
