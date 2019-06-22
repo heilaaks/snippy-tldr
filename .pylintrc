@@ -6,3 +6,8 @@ disable=useless-object-inheritance
 # The responses module that mocks the requests module is ignored because
 # it causes warnings from it's members.
 ignored-classes=responses
+
+[FORMAT]
+
+# Suited as of now for long lines in tests cases.
+max-line-length=120
