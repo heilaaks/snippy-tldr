@@ -49,6 +49,41 @@ def snippy_import_hook(logger, uri, validator, parser):
     If suitable, the ``parse`` object may be used to parse the source data to
     JSON note for Snippy.
 
+    The ``tldr man pages`` project seems use term ``page`` loosely in different
+    contexts. In order to try to provide a bit more maintainable code, a more
+    detailed terms have been invented for this project.
+
+    ```
+    # Tldr man pages hierarchical layers.
+    #
+    # translations        pages        tldr files
+    # ============       =======       ==========
+      pages.it     +
+      pages.pt-BR  |
+      pages.zh     |
+      pages        +---+ common  +
+                       | linux   |
+                       | osx     |
+                       | sunos   |
+                       + windows +---+
+                                     |
+                                     + alpine.md
+                                       apk.md
+    ```
+
+    ==================  ===================================================================
+    Term                Decscription
+    ==================  ===================================================================
+    *page*              |  A single tldr page like ``common``, ``linux`` or ``windows``.
+
+    *pages*             |  All tldr pages under one translation.
+
+    *translation*       |  Tldr man page page translation like ``pages.it`` or ``pages.zh``.
+
+    *tldr files         |  A single tldr man page Markdown file. The term ``tldr man page``
+                        |  is not used in order to avoid confusion with term ``page``.
+    ==================  ===================================================================
+
     Args
         validate (obj): A ``SnippyNotesValidator`` object to validate JSON notes.
         parse (obj): A ``SnippyNotesParser`` to parse notes attributes.
@@ -277,14 +312,14 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     def _read_tldr_pages(self):
         """Read tldr man pages."""
 
-        filenames = self._get_tlrd_filenames(self._uri)
-        for page in filenames:
-            self._read_page(page, filenames[page])
+        files = self._get_tlrd_files(self._uri)
+        for page in files:
+            self._read_page(page, files[page])
 
-    def _get_tlrd_filenames(self, uri):
-        """Get all tldr filenames.
+    def _get_tlrd_files(self, uri):
+        """Get all tldr file.
 
-        Read all tldr man page snippet filenames under the URI.
+        Read all tldr files under the give URI. The URI may point to
 
         Args:
             uri (str): URI where the tldr snippets are read.
@@ -301,9 +336,9 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             pages = self._get_tldr_pages()
             for page in pages:
                 print("page: %s" % page)
-                self._get_tlrd_filenames(page)
+                self._get_tlrd_files(page)
         elif ".md" in last_object:
-            print("file: %s" % uri)
+            print("FILE: %s" % uri)
             self._logger.debug("read one tldr man page snippet: %s", uri)
             match = self.RE_CATCH_TLDR_PAGE_URI.search(uri)
             if match:
@@ -314,8 +349,9 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 print("missed page from uri")
                 self._logger.debug("tldr page was not read from uri: %s", uri)
         elif any(path in uri for path in ("/tldr/pages", "tldr-pages/tldr")):
+            print("PAGE: %s" % uri)
             self._logger.debug("read tldr man page: %s", uri)
-            self._read_tldr_page_filenames(uri)
+            filenames = self._read_tldr_page_filenames(uri)
         else:
             print("unknown: %s" % uri)
             self._logger.debug("unknown tldr man page path: %s", uri)
@@ -339,9 +375,14 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             self._logger.debug("unknown tldr man page: %s", uri)
             return filenames
 
+        files = []
         if "http" in uri:
             response = requests.get(uri.strip("/"))
-            files = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
+            for filename in sorted(
+                set(self.RE_CATCH_TLDR_FILENAME.findall(response.text))
+            ):
+                files.append(urljoin(uri, filename))
+            files = files[:3]
             filenames = {tldr_page: files}
             print(filenames)
         else:
