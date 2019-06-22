@@ -129,7 +129,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
     RE_MATCH_GITHUB_TREE_URI = re.compile(
         r"""
-        http[s]?://github.com/tldr-pages/tldr/tree
+        http[s]?://github.com/tldr-pages/tldr/(tree|blob)
         """,
         re.VERBOSE,
     )
@@ -250,11 +250,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         self._snippets = []
         self._i = 0
 
-        print("uri: %s" % self._uri)
-        print("scheme: %s" % self._uri_scheme)
-        print("path: %s" % self._uri_path)
-
-        self._read_tldr_pages()
+        self._read_tldr_files()
 
     def __len__(self):
         """Return count of the snippets.
@@ -286,16 +282,15 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     def _get_uri(self, uri):
         """Format URI from the user.
 
-        This method makes sure that the URI received from user is in
+        This method makes sure that the URI or path received from user is in
         correct format.
 
-        The trailing slash is added if the URL is not pointing to a
-        file. The trailing slash allows ``ulrjoin`` to add e.g. the
-        filenames to URL without removing the last object in the URL
-        path.
+        The trailing slash is added if the URI is not pointing to a file. The
+        trailing slash allows ``ulrjoin`` to add path objects like filenames
+        to the URI without removing the last object in the URI path.
 
         Args:
-            uri (str): URI received from the ``--file`` CLI option.
+            uri (str): URI or path received from the ``--file`` CLI option.
 
         Returns:
             str: Formatted URI for the plugin.
@@ -303,23 +298,33 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         uri_ = uri if uri else self.TLDR_DEFAULT_URI
         _, file_extension = os.path.splitext(urlparse(uri_).path)
-        print("extension: %s" % file_extension)
         if file_extension != ".md" and not uri_.endswith("/"):
             uri_ = uri_ + "/"
 
         return uri_
 
-    def _read_tldr_pages(self):
-        """Read tldr man pages."""
+    def _read_tldr_files(self):
+        """Read all ``tldr files``.
+
+        The method reads and parses all the tldr files under the given path
+        or URI. The path or URI is received from the ``--file`` option of the
+        Snippy tool.
+        """
 
         files = self._get_tlrd_files(self._uri)
+        self._logger.debug(
+            "read total of %d tldr files in %d pages",
+            sum(map(len, files.values())),
+            len(files),
+        )
         for page in files:
             self._read_page(page, files[page])
 
     def _get_tlrd_files(self, uri):
-        """Get all tldr file.
+        """Get all ``tldr files``.
 
-        Read all tldr files under the give URI. The URI may point to
+        Read all tldr files under the given URI. The URI can point to a path
+        or URI.
 
         Args:
             uri (str): URI where the tldr snippets are read.
@@ -328,48 +333,40 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             dict: Tldr pages and files in each page.
         """
 
-        filenames = {}
+        files = {}
         last_object = os.path.basename(os.path.normpath(uri))
         if self.RE_MATCH_TLDR_PAGES.search(last_object):
-            print("under pages: %s" % uri)
             self._logger.debug("read all tldr man pages from: %s", uri)
             pages = self._get_tldr_pages()
             for page in pages:
-                print("page: %s" % page)
-                self._get_tlrd_files(page)
+                files.update(self._get_tlrd_files(page))
         elif ".md" in last_object:
-            print("FILE: %s" % uri)
             self._logger.debug("read one tldr man page snippet: %s", uri)
             match = self.RE_CATCH_TLDR_PAGE_URI.search(uri)
             if match:
                 page = match.group("page")
-                print("matched page: %s" % page)
-                self._read_tldr_file(uri, page)
+                self._read_tldr_file(page, uri)
             else:
-                print("missed page from uri")
                 self._logger.debug("tldr page was not read from uri: %s", uri)
         elif any(path in uri for path in ("/tldr/pages", "tldr-pages/tldr")):
-            print("PAGE: %s" % uri)
-            self._logger.debug("read tldr man page: %s", uri)
-            filenames = self._read_tldr_page_filenames(uri)
+            self._logger.debug("read tldr files under page: %s", uri)
+            files = self._read_tldr_page_files(uri)
         else:
-            print("unknown: %s" % uri)
             self._logger.debug("unknown tldr man page path: %s", uri)
 
-        return filenames
+        return files
 
-    def _read_tldr_page_filenames(self, uri):
-        """Read tldr page snippet filenames.
+    def _read_tldr_page_files(self, uri):
+        """Read tldr page files.
 
         Args:
-            uri (str): URI where the tldr snippets are read.
+            uri (str): URI or path where the tldr files are read.
 
         Returns:
-            list: List of URLs or file names with paths.
+            dict: All tldr files in a dictionary with a tldr ``page`` key.
         """
 
         filenames = {}
-        print("filenames")
         tldr_page = os.path.basename(os.path.normpath(uri))
         if tldr_page not in self.TLDR_PAGES:
             self._logger.debug("unknown tldr man page: %s", uri)
@@ -378,13 +375,11 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         files = []
         if "http" in uri:
             response = requests.get(uri.strip("/"))
-            for filename in sorted(
-                set(self.RE_CATCH_TLDR_FILENAME.findall(response.text))
-            ):
-                files.append(urljoin(uri, filename))
-            files = files[:3]
+            names = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
+            for filename in names:
+                files.append(self._join_paths(uri, filename))
+            # files = files[:3]
             filenames = {tldr_page: files}
-            print(filenames)
         else:
             print("local files")
 
@@ -402,15 +397,13 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         tldr snippets under each tldr page.
 
         Returns:
-            list: Tldr man pages with URI or file path.
+            list: Tldr pages with URI or path.
         """
 
         pages = []
         if "http" in self._uri_scheme:
             html = requests.get(self._uri.strip("/")).text
-            print("html %s" % html)
             pages = self.RE_CATCH_TLDR_PAGE_HTML.findall(html)
-            print("here: %s" % pages)
         else:
             try:
                 pages = os.listdir(self._uri_path)
@@ -424,45 +417,44 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         pages = sorted(list(set(self.TLDR_PAGES) & set(pages)))
         pages_ = []
         for page in pages:
-            if "http" in self._uri_scheme:
-                pages_.append(urljoin(self._uri, page))
-            else:
-                pages_.append(os.path.join(self._uri, page))
+            pages_.append(self._join_paths(self._uri, page))
         self._logger.debug("parsed tldr pages: %s", pages_)
 
         return pages_
 
     def _read_page(self, page, files):
-        """Read snippets from the tldr man page.
+        """Read tldr files from the page.
 
         Args:
             page (str): Name of the tldr page.
-            filenames (tuple): List of filenames under the page.
+            files (tuple): List of tldr files under the page.
         """
 
         for uri in files:
-            self._read_tldr_file(uri, page)
+            self._read_tldr_file(page, uri)
 
-    def _read_tldr_file(self, uri, page):
+    def _read_tldr_file(self, page, uri):
         """Read tldr file.
 
         Args:
-            uri (str): URI where the tldr snippet is read.
             page (str): Name of the tldr page.
+            uri (str): URI or path where the tldr file is read.
         """
 
         snippet = ""
         if "http" in self._uri_scheme:
             uri_ = self.RE_MATCH_GITHUB_TREE_URI.sub(
                 "https://raw.githubusercontent.com/tldr-pages/tldr", uri
-            )
-            tldr = requests.get(uri_.strip("/")).text
+            ).strip("/")
+            self._logger.debug("request tldr file: %s", uri_)
+            tldr_file = requests.get(uri_).text
         else:
             with open(uri, "r") as infile:
-                tldr = infile.read()
+                self._logger.debug("read tldr file: %s", uri_)
+                tldr_file = infile.read()
 
-        snippet = self._parse_tldr_page(uri, page, tldr)
-        print(snippet)
+        snippet = self._parse_tldr_page(page, uri, tldr_file)
+        print("snippet: %s" % snippet)
         if snippet:
             self._snippets.append(snippet)
         else:
@@ -470,15 +462,36 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 "failed to parse tldr man page: %s :from: %s", uri, snippet
             )
 
-    def _parse_tldr_page(self, source, page, tldr):
+    def _join_paths(self, uri, path_object):
+        """Join URI or path to an object.
+
+        Args:
+            uri (str): URI or path base.
+            path_object (str): Path object to be added to the URI.
+
+        Returns:
+            str: Joined URI or path.
+        """
+
+        if "http" in self._uri_scheme:
+            uri_ = uri
+            if not uri_.endswith("/"):
+                uri_ = uri_ + "/"
+            path = urljoin(uri_, path_object)
+        else:
+            path = os.path.join(uri, path_object)
+
+        return path
+
+    def _parse_tldr_page(self, page, source, tldr):
         """Parse and valudate one tldr man page.
 
         The method parses and validates one tldr man page to a snippet
         data structure for Snippy tool.
 
         Args
-            source (str): A link where the tldr man page was read.
             page (str): The tldr page.
+            source (str): A link where the tldr man page was read.
             tldr (str): A tldr snippet in a text string.
 
         Returns:
@@ -534,7 +547,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         else:
             self._logger.debug("parser did not find tldr snippets at all: %s", tldr)
 
-        print("data %s" % data)
         return Parser.format_data(Const.SNIPPET, data)
 
     def _read_tldr_brief(self, tldr):

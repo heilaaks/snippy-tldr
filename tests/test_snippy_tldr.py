@@ -136,9 +136,11 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
 
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
-        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
+        uri = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/alpine.md"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'
