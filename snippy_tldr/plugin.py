@@ -57,10 +57,10 @@ def snippy_import_hook(logger, uri, validator, parser):
         #
         # translations        pages        tldr files
         # ============       =======       ==========
-          pages.it     +
+          pages.it     |
           pages.pt-BR  |
           pages.zh     |
-          pages        +---+ common  +
+          pages        +---+ common  |
                            | linux   |
                            | osx     |
                            | sunos   |
@@ -78,8 +78,10 @@ def snippy_import_hook(logger, uri, validator, parser):
 
     *translation*       |  A tldr man page page translation like ``pages.it`` or ``pages.zh``.
 
-    *tldr files*        |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
+    *tldr file*         |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
                         |  avoid confusion with term ``page``.
+
+    *tldr files*        |  All tldr man page Markdown files under one page.
     ==================  ======================================================================
 
     Args
@@ -357,10 +359,10 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         return files
 
     def _read_tldr_page_files(self, uri):
-        """Read tldr page files.
+        """Read ``tldr files`` from a ``page``.
 
         Args:
-            uri (str): URI or path where the tldr files are read.
+            uri (str): URI or path where the ``tldr files`` are read.
 
         Returns:
             dict: All tldr files in a dictionary with a tldr ``page`` key.
@@ -375,14 +377,15 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         files = []
         if "http" in uri:
             response = requests.get(uri.strip("/"))
+            print(response.text)
             names = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
             for filename in names:
                 files.append(self._join_paths(uri, filename))
-            # files = files[:3]
+            files = files[:3]
             filenames = {tldr_page: files}
         else:
             print("local files")
-
+        print("tldr files: %s" % filenames)
         return filenames
 
     def _get_tldr_pages(self):
@@ -403,6 +406,8 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         pages = []
         if "http" in self._uri_scheme:
             html = requests.get(self._uri.strip("/")).text
+            print("====")
+            print("responses %s" % html)
             pages = self.RE_CATCH_TLDR_PAGE_HTML.findall(html)
         else:
             try:
@@ -419,6 +424,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         for page in pages:
             pages_.append(self._join_paths(self._uri, page))
         self._logger.debug("parsed tldr pages: %s", pages_)
+        print("pages: %s" % pages_)
 
         return pages_
 
@@ -447,6 +453,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 "https://raw.githubusercontent.com/tldr-pages/tldr", uri
             ).strip("/")
             self._logger.debug("request tldr file: %s", uri_)
+            print("read uri: %s" % uri_)
             tldr_file = requests.get(uri_).text
         else:
             with open(uri, "r") as infile:
