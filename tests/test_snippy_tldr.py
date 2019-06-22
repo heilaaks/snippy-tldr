@@ -17,7 +17,7 @@
 #
 #  SPDX-License-Identifier: Apache-2.0
 
-"""test-snippy-tldr: Test snippy plugin to import tldr man pages."""
+"""test_snippy_tldr: Test tldr man page import plugin."""
 
 import pytest
 import responses
@@ -34,16 +34,19 @@ from snippy_tldr.plugin import SnippyTldr
 # actually iterating the values but the size of the list.
 
 
-class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
+class TestSnippyTldr(object):
     """Test snippy-tldr."""
 
     @staticmethod
     @responses.activate
     @pytest.mark.usefixtures("mock-snippy")
-    def test_001():
-        """Test reading remote tldr pages."""
+    def test_read_github_uri_001():
+        """Test reading one ``page`` from GitHub.
 
-        # Read default tldr man page when user did not use ``--file`` option.
+        Read the default tldr man page when URI is not provided.
+        """
+
+        # Read the default tldr man page when URI is not provided.
         responses.add(
             responses.GET,
             "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
@@ -52,9 +55,17 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         )
         _ = SnippyTldr(Logger(), "", None, None)
         assert len(responses.calls) == 1
-        responses.reset()
 
-        # Read all tldr pages when the URI does not have trailing slash.
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_002():
+        """Test reading all ``pages`` under one ``translation``.
+
+        Read all English translated tldr pages from GitHub master branch. The
+        URI does not have trailing slash.
+        """
+
         uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
         body = (
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
@@ -74,9 +85,47 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
         _ = SnippyTldr(Logger(), uri, None, None)
         assert len(responses.calls) == 5
-        responses.reset()
 
-        # Test reading all tldr pages under 'pt-BR' translation.
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_003():
+        """Test reading all ``pages`` under one ``translation``.
+
+        Read all English translated tldr pages from GitHub master branch. The
+        URI has a trailing slash.
+        """
+
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/"
+        body = (
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+        )
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/master/pages",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/sunos",
+            "https://github.com/tldr-pages/tldr/tree/master/pages/windows",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        for _ in range(len(requests)):
+            responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 5
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_004():
+        """Test reading all ``pages`` under one ``translation``.
+
+        Read all Brazilian Portuguese translated tldr pages from GitHub master
+        branch.
+        """
+
         uri = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR"
         body = (
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.pt-BR/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
@@ -97,16 +146,149 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         _ = SnippyTldr(Logger(), uri, None, None)
         assert len(responses.calls) == 5
 
-        # Test reading one tldr snippet.
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
-        uri_cli = (
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux/alpine.md"
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_005():
+        """Test reading all ``pages`` from one ``translation``.
+
+        Read all Chinese translated tldr pages from GitHub master branch.
+        """
+
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh"
+        body = (
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="common" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.zh/common">common</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.zh/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.zh/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.zh/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
         )
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/master/pages.zh",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/common",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/osx",
+            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/windows",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        for _ in range(len(requests)):
+            responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 5
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_006():
+        """Test reading all ``pages`` from a GitHub branch.
+
+        Read all Italian translated tldr pages from the italian branch.
+        """
+
+        uri = "https://github.com/tldr-pages/tldr/tree/italian/pages.it"
+        body = '<span class="css-truncate-target"><a class="js-navigation-open" title="common" id="9efab2399c7c560b" href="/tldr-pages/tldr/tree/italian/pages.it/common">common</a></span>'  # noqa pylint: disable=line-too-long
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/italian/pages.it",
+            "https://github.com/tldr-pages/tldr/tree/italian/pages.it/common",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        for _ in range(len(requests)):
+            responses.add(responses.GET, requests.pop(0), body=body, status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 2
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_uri_007():
+        """Test reading ``tldr files`` from one ``page``.
+
+        Read all tldr files from one tldr page in GitHub master branch.
+        """
+
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/osx"
+        files = (
+            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="units.md" id="0c1af7a5ee4b57a644643230ed526db2-5d01b9086ff0bf4874b2757dbbde5233dd6ff3f7" href="/tldr-pages/tldr/blob/master/pages/osx/units.md">units.md</a></span>\n'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="w.md" id="0dd87f8dc5cbfa861c16c5ad3c332ab4-1cf83af6e84ea532e6c09a1cead470b6922c6a91" href="/tldr-pages/tldr/blob/master/pages/osx/w.md">w.md</a></span>\n'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="wacaw.md" id="6737e3eb2cef3810832f9b5adc372ea4-132b0b691c4c40bd79047f7b70afadd49dc43cd5" href="/tldr-pages/tldr/blob/master/pages/osx/wacaw.md">wacaw.md</a></span>\n'  # noqa pylint: disable=line-too-long
+        )
+        requests = [
+            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
+            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/units.md",
+            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/w.md",
+            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/wacaw.md",
+        ]
+        responses.add(responses.GET, requests.pop(0), body=files, status=200)
+        responses.add(responses.GET, requests.pop(0), body="", status=200)
+        responses.add(responses.GET, requests.pop(0), body="", status=200)
+        responses.add(responses.GET, requests.pop(0), body="", status=200)
+        _ = SnippyTldr(Logger(), uri, None, None)
+        assert len(responses.calls) == 4
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_file_001():
+        """Test reading one ``tldr file`` from the GitHub.
+
+        Read one tldr file directly from GitHub. The given URI is the URI
+        copied from a web browser navigation link. This is the 'blob' URI.
+        """
+
+        uri_cli = (
+            "https://github.com/tldr-pages/tldr/blob/master/pages.pt-BR/linux/alpine.md"
+        )
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
+        body = ""
         responses.add(responses.GET, uri_req, body=body, status=200)
         _ = SnippyTldr(Logger(), uri_cli, None, None)
 
+        uri_cli = "https://github.com/tldr-pages/tldr/blob/master/pages/osx/alpine.md"
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_file_002():
+        """Test reading one ``tldr file`` from the GitHub.
+
+        Read one tldr file directly from GitHub. The given URI is the URI
+        copied from HTML page. This is the 'tree' URI that is redirected by
+        GitHun to 'blob' URI.
+        """
+
+        uri_cli = (
+            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux/alpine.md"
+        )
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
+        body = ""
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
+
         uri_cli = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
+
+    @staticmethod
+    @responses.activate
+    @pytest.mark.usefixtures("mock-snippy")
+    def test_read_github_file_003():
+        """Test reading one ``tldr file`` from the GitHub.
+
+        Read one tldr file directly from GitHub. The given URI is the raw
+        formatted file, not the HTML URI.
+        """
+
+        uri_cli = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
+        body = ""
+        responses.add(responses.GET, uri_req, body=body, status=200)
+        _ = SnippyTldr(Logger(), uri_cli, None, None)
+
+        uri_cli = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
+        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
         responses.add(responses.GET, uri_req, body=body, status=200)
         _ = SnippyTldr(Logger(), uri_cli, None, None)
 
@@ -137,10 +319,13 @@ class TestSnippyTldr(object):  # pylint: disable=too-few-public-methods
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/osx"
+        uri = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/alpine.md"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
-        uri = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/alpine.md"
+        # uri = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/alpine.md"
+        # uri = "https://github.com/tldr-pages/tldr/tree/italian/pages.it"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'
