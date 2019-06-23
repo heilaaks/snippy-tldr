@@ -43,11 +43,11 @@ except ImportError:
 
 
 def snippy_import_hook(logger, uri):
-    """Import content for Snippy.
+    """Import content for Snippy tool.
 
     This is an import hook that must return an iterator object. The iterator
     must be iterable class that implements ``next`` and ``len`` methods. The
-    returned JSON must pass the ``snippy.plugins.Schema.validate()`` method.
+    returned JSON must pass the ``validate`` method in ``snippy.plugins.Schema``
 
     The ``snippy.plugins.Parser`` class may be used to parse the source data
     to a JSON content for Snippy.
@@ -81,13 +81,13 @@ def snippy_import_hook(logger, uri):
 
     *translation*  |  A tldr man page page translation like ``pages.it`` or ``pages.zh``.
 
-    *tldr file*    |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
-                   |  avoid confusion with term ``page``.
+    *tldr file*    |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order
+                   |  to avoid confusion with term ``page``.
 
     *tldr files*   |  All tldr man page Markdown files under one page.
     =============  ======================================================================
 
-    Args
+    Args:
         logger (obj): Logger to be used with the plugin.
         uri (str): URI or path where the data is imported.
 
