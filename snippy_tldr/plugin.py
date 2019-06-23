@@ -34,24 +34,27 @@ import requests
 try:
     from snippy.plugins import Const
     from snippy.plugins import Parser
+    from snippy.plugins import Schema
+
 except ImportError:
     from tests.conftest import Const
     from tests.conftest import Parser
+    from tests.conftest import Schema
 
 
-def snippy_import_hook(logger, uri, validator, parser):
-    """Import notes for Snippy.
+def snippy_import_hook(logger, uri):
+    """Import content for Snippy.
 
-    This is an import hook that returns an iterator object. The iterator must
-    be an iterable class that implements next() and len() methods. The iterator
-    must return JSON structures that pass the ``validate.note()``.
+    This is an import hook that must return an iterator object. The iterator
+    must be iterable class that implements ``next`` and ``len`` methods. The
+    returned JSON must pass the ``snippy.plugins.Schema.validate()`` method.
 
-    If suitable, the ``parse`` object may be used to parse the source data to
-    JSON note for Snippy.
+    The ``snippy.plugins.Parser`` class may be used to parse the source data
+    to a JSON content for Snippy.
 
-    The ``tldr man pages`` project seems use term ``page`` loosely in different
-    contexts. In order to try to provide a bit more maintainable code, a more
-    detailed terms have been invented for this project::
+    The ``tldr man pages`` project seems to use the term ``page`` loosely in
+    different contexts. In order to try to provide a bit more maintainable
+    code, a more detailed terms have been invented for this project::
 
         # Tldr man pages hierarchical layers.
         #
@@ -69,52 +72,77 @@ def snippy_import_hook(logger, uri, validator, parser):
                                          + alpine.md
                                            apk.md
 
-    ==================  ======================================================================
-    Term                Decscription
-    ==================  ======================================================================
-    *page*              |  A single tldr page like ``common``, ``linux`` or ``windows``.
+    =============  ======================================================================
+    Term           Decscription
+    =============  ======================================================================
+    *page*         |  A single tldr page like ``common``, ``linux`` or ``windows``.
 
-    *pages*             |  All tldr pages under one translation.
+    *pages*        |  All tldr pages under one translation.
 
-    *translation*       |  A tldr man page page translation like ``pages.it`` or ``pages.zh``.
+    *translation*  |  A tldr man page page translation like ``pages.it`` or ``pages.zh``.
 
-    *tldr file*         |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
-                        |  avoid confusion with term ``page``.
+    *tldr file*    |  A single tldr man page Markdown file. The term ``tldr man page`` is not used in order to
+                   |  avoid confusion with term ``page``.
 
-    *tldr files*        |  All tldr man page Markdown files under one page.
-    ==================  ======================================================================
+    *tldr files*   |  All tldr man page Markdown files under one page.
+    =============  ======================================================================
 
     Args
-        validate (obj): A ``SnippyNotesValidator`` object to validate JSON notes.
-        parse (obj): A ``SnippyNotesParser`` to parse notes attributes.
-        uri (str): The value of ``-f|--file`` command line option from Snippy tool.
+        logger (obj): Logger to be used with the plugin.
+        uri (str): URI or path where the data is imported.
 
     Returns:
-        obj: Iterator object to store JSON notes.
+        obj: Iterator object that stores the JSON content from the plugin.
 
     Examples
     --------
-    >>> def __init__(self, validator, parser, uri):
-    >>>     self.validate = Validator
-    >>>     self.parse = parser
-    >>>     self.uri = uri
-    >>>     self._parse_notes()
+    >>> from snippy.plugins import Const
+    >>> from snippy.plugins import Parser
+    >>> from snippy.plugins import Schema
     >>>
-    >>> def _parse_notes(self):
-    >>>     filename = 'notes-list.md'
-    >>>     with open(filename, 'w') as infile:
-    >>>         note = self._parse_note(infile)
-    >>>         if validate.note(note):
-    >>>             self.notes.append(note)
+    >>> class SnippyTldr(object):
     >>>
-    >>> def _parse_note(self, infile)
-    >>>     note = {}
-    >>>     note['category'] = self.parse
+    >>>     def __init__(self, logger, uri):
+    >>>         self._logger = logger
+    >>>         self._uri = uri
+    >>>         self._schema = Schema()
+    >>>         self._content = []
+    >>>         self._i = 0
+    >>>
+    >>>         self._read_tldr_files()
+    >>>
+    >>>     def __len__(self):
+    >>>         return len(self._content)
+    >>>
+    >>>     def __iter__(self):
+    >>>         return self
+    >>>
+    >>>     def next(self):
+    >>>         if self._i < len(self):
+    >>>             content = self._content[self._i]
+    >>>             self._i += 1
+    >>>         else:
+    >>>             raise StopIteration
+    >>>
+    >>>         return content
+    >>>
+    >>>     __next__ = next  # Python 3 compatible iterator.
+    >>>
+    >>>     def _read_tldr_files(self):
+    >>>         with open('alpine.md', 'w') as infile:
+    >>>             tldr = self._parse_file(infile.read())
+    >>>             if self._schema.validate(tldr):
+    >>>                 self.notes.append(tldr)
+    >>>
+    >>>     def _parse_file(self, infile)
+    >>>         content = {}
+    >>>         content['category'] = Const.SNIPPET
+    >>>         content['data'] = Parser.format_data(['first line', 'second line'])
+    >>>
+    >>>         return content
     """
 
-    tldr = SnippyTldr(logger, uri, validator, parser)
-
-    return tldr
+    return SnippyTldr(logger, uri)
 
 
 class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
@@ -240,13 +268,12 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         re.MULTILINE | re.VERBOSE,
     )
 
-    def __init__(self, logger, uri, validator, parser):
+    def __init__(self, logger, uri):
         self._logger = logger
-        self._validate = validator
-        self._parse = parser
         self._uri = self._get_uri(uri)
         self._uri_scheme = urlparse(self._uri).scheme
         self._uri_path = urlparse(self._uri).path
+        self._schema = Schema()
         self._snippets = []
         self._i = 0
 
@@ -377,15 +404,14 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         files = []
         if "http" in uri:
             response = requests.get(uri.strip("/"))
-            print(response.text)
             names = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
             for filename in names:
                 files.append(self._join_paths(uri, filename))
-            files = files[:3]
+            # files = files[:3]
             filenames = {tldr_page: files}
         else:
             print("local files")
-        print("tldr files: %s" % filenames)
+        # print("tldr files: %s" % filenames)
         return filenames
 
     def _get_tldr_pages(self):
@@ -406,8 +432,8 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         pages = []
         if "http" in self._uri_scheme:
             html = requests.get(self._uri.strip("/")).text
-            print("====")
-            print("responses %s" % html)
+            # print("====")
+            # print("responses %s" % html)
             pages = self.RE_CATCH_TLDR_PAGE_HTML.findall(html)
         else:
             try:
@@ -424,7 +450,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         for page in pages:
             pages_.append(self._join_paths(self._uri, page))
         self._logger.debug("parsed tldr pages: %s", pages_)
-        print("pages: %s" % pages_)
+        # print("pages: %s" % pages_)
 
         return pages_
 
@@ -453,7 +479,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 "https://raw.githubusercontent.com/tldr-pages/tldr", uri
             ).strip("/")
             self._logger.debug("request tldr file: %s", uri_)
-            print("read uri: %s" % uri_)
+            # print("read uri: %s" % uri_)
             tldr_file = requests.get(uri_).text
         else:
             with open(uri, "r") as infile:
@@ -461,12 +487,13 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 tldr_file = infile.read()
 
         snippet = self._parse_tldr_page(page, uri, tldr_file)
-        print("snippet: %s" % snippet)
-        if snippet:
+        if snippet and self._schema.validate(snippet):
+            print("validated")
             self._snippets.append(snippet)
         else:
+            print("not validated")
             self._logger.debug(
-                "failed to parse tldr man page: %s :from: %s", uri, snippet
+                "failed to parse tldr man page: %s :from: %s", uri, tldr_file
             )
 
     def _join_paths(self, uri, path_object):

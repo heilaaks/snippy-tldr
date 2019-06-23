@@ -46,14 +46,9 @@ class TestSnippyTldr(object):
         Read the default tldr man page when URI is not provided.
         """
 
-        # Read the default tldr man page when URI is not provided.
-        responses.add(
-            responses.GET,
-            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
-            json={},
-            status=200,
-        )
-        _ = SnippyTldr(Logger(), "", None, None)
+        requests = ["https://github.com/tldr-pages/tldr/tree/master/pages/linux"]
+        responses.add(responses.GET, requests.pop(0), json={}, status=200)
+        SnippyTldr(Logger(), "")
         assert len(responses.calls) == 1
 
     @staticmethod
@@ -83,7 +78,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body=body, status=200)
         for _ in range(len(requests)):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 5
 
     @staticmethod
@@ -113,7 +108,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body=body, status=200)
         for _ in range(len(requests)):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 5
 
     @staticmethod
@@ -143,7 +138,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body=body, status=200)
         for _ in range(len(requests)):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 5
 
     @staticmethod
@@ -172,7 +167,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body=body, status=200)
         for _ in range(len(requests)):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 5
 
     @staticmethod
@@ -193,7 +188,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body=body, status=200)
         for _ in range(len(requests)):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 2
 
     @staticmethod
@@ -221,7 +216,7 @@ class TestSnippyTldr(object):
         responses.add(responses.GET, requests.pop(0), body="", status=200)
         responses.add(responses.GET, requests.pop(0), body="", status=200)
         responses.add(responses.GET, requests.pop(0), body="", status=200)
-        _ = SnippyTldr(Logger(), uri, None, None)
+        _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 4
 
     @staticmethod
@@ -240,12 +235,12 @@ class TestSnippyTldr(object):
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
         body = ""
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
         uri_cli = "https://github.com/tldr-pages/tldr/blob/master/pages/osx/alpine.md"
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
     @staticmethod
     @responses.activate
@@ -264,12 +259,12 @@ class TestSnippyTldr(object):
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
         body = ""
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
         uri_cli = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
     @staticmethod
     @responses.activate
@@ -285,12 +280,12 @@ class TestSnippyTldr(object):
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
         body = ""
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
         uri_cli = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
         uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
         responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli, None, None)
+        _ = SnippyTldr(Logger(), uri_cli)
 
     @staticmethod
     @pytest.mark.skip(reason="no way of currently testing this")
@@ -316,7 +311,7 @@ class TestSnippyTldr(object):
         #       uri = 'file:../tldr/pages/linux/alpine.md'
         #       uri = 'file:../tld'
 
-        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
+        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
@@ -332,7 +327,7 @@ class TestSnippyTldr(object):
         # uri = 'file:../tldr/pages'
         # uri = 'file:../tldr/pages/linux/alpine.md'
         # uri = 'file:../tld'
-        SnippyTldr(Logger(), uri, "test", "test")
+        SnippyTldr(Logger(), uri)
 
 
 class Logger(object):  # pylint: disable=too-few-public-methods

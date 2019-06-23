@@ -66,3 +66,11 @@ class Parser(object):  # pylint: disable=too-few-public-methods
     @classmethod
     def format_tags(cls, category, value):
         """Dummy method for mock."""
+
+
+class Schema(object):  # pylint: disable=too-few-public-methods
+    """Dummy mock class."""
+
+    @classmethod
+    def validate(cls, document):
+        """Dummy method for mock."""
