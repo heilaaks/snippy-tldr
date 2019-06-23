@@ -47,7 +47,7 @@ def snippy_import_hook(logger, uri):
 
     This is an import hook that must return an iterator object. The iterator
     must be iterable class that implements ``next`` and ``len`` methods. The
-    returned JSON must pass the ``validate`` method in ``snippy.plugins.Schema``
+    returned JSON must pass the ``validate`` method in ``snippy.plugins.Schema``.
 
     The ``snippy.plugins.Parser`` class may be used to parse the source data
     to a JSON content for Snippy.
@@ -67,10 +67,9 @@ def snippy_import_hook(logger, uri):
                            | linux   |
                            | osx     |
                            | sunos   |
-                           + windows +---+
-                                         |
-                                         + alpine.md
-                                           apk.md
+                           + windows +---+ alpine.md
+                                         | apk.md
+                                         | apt-get.md
 
     =============  ======================================================================
     Term           Decscription
@@ -92,7 +91,7 @@ def snippy_import_hook(logger, uri):
         uri (str): URI or path where the data is imported.
 
     Returns:
-        obj: Iterator object that stores the JSON content from the plugin.
+        obj: Iterator object that stores the Snippy content from the plugin.
 
     Examples
     --------

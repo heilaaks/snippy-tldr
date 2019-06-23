@@ -28,12 +28,12 @@ and Python 2.7.
     workon snippy-tldr-python3.7
 
 The snippy-tldr continuous integration will run all tests the same
-make test target.
+make tests target.
 
 .. code:: bash
 
     # Run the development tests.
-    make test
+    make tests
 
 Documentation
 ~~~~~~~~~~~~~

@@ -36,7 +36,7 @@ EXTRAS_DEVEL = (
     'sphinx-autobuild==0.7.1'
 )
 
-EXTRAS_TEST = (
+EXTRAS_TESTS = (
     "flake8==3.7.7",
     "pluggy==0.12.0",
     'pylint==1.9.4 ; python_version=="2.7.*"',
@@ -84,8 +84,8 @@ setup(
         "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
     ],
-    extras_require={"devel": EXTRAS_DEVEL + EXTRAS_TEST, "test": EXTRAS_TEST},
-    tests_require=EXTRAS_TEST,
+    extras_require={"devel": EXTRAS_DEVEL + EXTRAS_TESTS, "tests": EXTRAS_TESTS},
+    tests_require=EXTRAS_TESTS,
     test_suite="tests",
     entry_points={"snippyplugin": ["snippy = snippy_tldr.plugin"]},
 )

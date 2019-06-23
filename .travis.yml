@@ -15,10 +15,10 @@ env:
 install:
   - make upgrade-wheel
   - make install-coverage
-  - make install-test
+  - make install-tests
 
 script:
-  - make test
+  - make tests
 
 jobs:
   include:

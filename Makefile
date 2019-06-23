@@ -37,8 +37,8 @@ upgrade-wheel:
 install-devel:
 	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) .[devel]
 
-install-test:
-	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) .[test]
+install-tests:
+	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) .[tests]
 
 install-coverage:
 	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) codecov coveralls
@@ -50,10 +50,11 @@ outdated:
 docs:
 	make -C docs html
 
-test:
+.PHONY: tests
+tests:
 	$(PYTHON) -m pytest -x ${COVERAGE}
 
-test-tox:
+tests-tox:
 	tox
 
 coverage:
@@ -68,7 +69,7 @@ format:
 	black tests
 	black setup.py
 
-clean: clean-build clean-pyc clean-test
+clean: clean-build clean-pyc clean-tests
 
 clean-all: clean
 
@@ -88,7 +89,7 @@ clean-pyc:
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-clean-test:
+clean-tests:
 	rm -drf .cache
 	rm -drf .coverage
 	rm -drf .pytest_cache
@@ -104,7 +105,7 @@ help:
 	@echo '  clean                 - Clean all targets.'
 	@echo ''
 	@echo 'Testing targets:'
-	@echo '  test                  - Run tests.'
+	@echo '  tests                 - Run tests.'
 	@echo ''
 	@echo 'Debugging examples:'
 	@echo '  make [target] --debug - Enable Makefile debugging.'
