@@ -31,7 +31,7 @@ REQUIRES = ("requests", "snippy>=0.10.0")
 EXTRAS_DEVEL = (
     'black ; python_version>"3.5"',
     'sphinx==1.8.5 ; python_version<="3.4"',
-    'sphinx==2.1.1 ; python_version>"3.4"',
+    'sphinx==2.1.2 ; python_version>"3.4"',
     "sphinx_rtd_theme==0.4.3",
     "sphinx-autobuild==0.7.1",
 )
@@ -41,19 +41,19 @@ EXTRAS_TESTS = (
     "pluggy==0.12.0",
     'pylint==1.9.4 ; python_version=="2.7.*"',
     'pylint==2.3.1 ; python_version>"2.7"',
-    "pytest==4.6.3",
+    "pytest==4.6.4",
     "pytest-cov==2.7.1",
     "pytest-mock==1.10.4",
     "pytest-xdist==1.29.0",
     "responses==0.10.6",
-    "tox==3.12.1",
+    "tox==3.13.1",
 )
 
 setup(
     name="snippy-tldr",
     version="0.2a0",
     author="Heikki J. Laaksonen",
-    author_email="laaksonen.heikki.j@gmail.com",
+    author_email="laaksonen.heikki.j@gmailmake t        .com",
     license="Apache Software License 2.0",
     url="https://github.com/heilaaks/snippy-tldr",
     description="Snippy plugin to import tldr man pages.",
