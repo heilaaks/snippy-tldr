@@ -29,11 +29,11 @@ with io.open("README.rst", mode="r", encoding="utf-8") as infile:
 REQUIRES = ("requests", "snippy>=0.10.0")
 
 EXTRAS_DEVEL = (
-    "black",
+    'black ; python_version>"3.5"',
     'sphinx==1.8.5 ; python_version<="3.4"',
     'sphinx==2.1.1 ; python_version>"3.4"',
     "sphinx_rtd_theme==0.4.3",
-    'sphinx-autobuild==0.7.1'
+    "sphinx-autobuild==0.7.1",
 )
 
 EXTRAS_TESTS = (
