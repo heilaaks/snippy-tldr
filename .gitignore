@@ -25,3 +25,6 @@ docs/build/
 *.swp
 *.swo
 *.swn
+
+# Editors
+.idea/
