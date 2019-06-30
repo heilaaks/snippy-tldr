@@ -24,6 +24,7 @@ import responses
 
 from snippy_tldr.plugin import SnippyTldr
 
+
 # The responses module does not seem to work when responses are set
 # in a for loop by iterating the value of a list. It seems that the
 # module takes a reference to value (pointer to list) and that gets
@@ -35,25 +36,277 @@ from snippy_tldr.plugin import SnippyTldr
 
 
 class TestSnippyTldr(object):
-    """Test snippy-tldr."""
+    """Test snippy-tldr plugin."""
 
     @staticmethod
     @responses.activate
-    @pytest.mark.skip(reason="refactor")
     @pytest.mark.usefixtures("mock-snippy")
     def test_read_github_uri_001():
-        """Test reading one ``page`` from GitHub.
+        """Test reading tldr pages from GitHib under one ``platform``.
 
-        Read the default tldr man page when URI is not provided.
+        Read default tldr man pages from English translated Linux platform
+        when the tldr URI is not provided to the plugin.
         """
 
-        requests = [
-            "https://api.github.com/repos/tldr-pages/tldr/branches/master",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
+        snippets = [
+            {
+                "category": "snippet",
+                "data": [
+                    "add-apt-repository {{repository_spec}}  #  Add a new apt repository.",
+                    "add-apt-repository --remove {{repository_spec}}  #  Remove an apt repository.",
+                    "add-apt-repository --update {{repository_spec}}  #  Update the package cache after adding a repository.",
+                    "add-apt-repository --enable-source {{repository_spec}}  #  Enable source packages.",
+                ],
+                "brief": "Manages apt repository definitions.",
+                "description": "Manages apt repository definitions.",
+                "name": "add-apt-repository",
+                "groups": ["linux"],
+                "tags": ["linux"],
+                "source": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/add-apt-repository.md",
+            },
+            {
+                "category": "snippet",
+                "data": [
+                    "adduser {{username}}  #  Create a new user with a default home directory and prompt the user to set a password.",
+                    "adduser --no-create-home {{username}}  #  Create a new user without a home directory.",
+                    "adduser --home {{path/to/home}} {{username}}  #  Create a new user with a home directory at the specified path.",
+                    "adduser --shell {{path/to/shell}} {{username}}  #  Create a new user with the specified shell set as the login shell.",
+                    "adduser --ingroup {{group}} {{username}}  #  Create a new user belonging to the specified group.",
+                    "adduser {{username}} {{group}}  #  Add an existing user to the specified group.",
+                ],
+                "brief": "User addition utility.",
+                "description": "User addition utility.",
+                "name": "adduser",
+                "groups": ["linux"],
+                "tags": ["linux"],
+                "source": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/adduser.md",
+            },
         ]
-        responses.add(responses.GET, requests.pop(0), json={}, status=200)
-        SnippyTldr(Logger(), "")
-        assert len(responses.calls) == 1
+
+        entries = [
+            {
+                "request": {
+                    "url": "https://api.github.com/repos/tldr-pages/tldr/branches/master"
+                },
+                "response": {
+                    "status": 200,
+                    "body": {
+                        "name": "master",
+                        "commit": {
+                            "sha": "d496b0c18f450c4504c0c643ade531e79fdd1484",
+                            "node_id": "MDY6Q29tbWl0MTUwMTk5NjI6ZDQ5NmIwYzE4ZjQ1MGM0NTA0YzBjNjQzYWRlNTMxZTc5ZmRkMTQ4NA==",
+                            "commit": {
+                                "message": "astyle: reword description (#3150)",
+                                "tree": {
+                                    "sha": "67c429acf561194366a25a28fe73fb33ec0739dc",
+                                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                "request": {
+                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc"
+                },
+                "response": {
+                    "status": 200,
+                    "body": {
+                        "sha": "67c429acf561194366a25a28fe73fb33ec0739dc",
+                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc",
+                        "tree": [
+                            {
+                                "path": ".editorconfig",
+                                "type": "blob",
+                                "sha": "197cb78962bd0973086f89d4421138e1d82f9080",
+                                "size": 235,
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/197cb78962bd0973086f89d4421138e1d82f9080",
+                            },
+                            {
+                                "path": "pages.pt-BR",
+                                "mode": "040000",
+                                "type": "tree",
+                                "sha": "6b55cdc79c194f1951f3cd75f8908732d8a6e451",
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/6b55cdc79c194f1951f3cd75f8908732d8a6e451",
+                            },
+                            {
+                                "path": "pages",
+                                "mode": "040000",
+                                "type": "tree",
+                                "sha": "64605406ef576220cbb6b59f64c525778e1bc6b8",
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8",
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                "request": {
+                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8"
+                },
+                "response": {
+                    "status": 200,
+                    "body": {
+                        "sha": "64605406ef576220cbb6b59f64c525778e1bc6b8",
+                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8",
+                        "tree": [
+                            {
+                                "path": "common",
+                                "mode": "040000",
+                                "type": "tree",
+                                "sha": "63f4c272b4bc0a80c0f9f805766de29bac0bc055",
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/63f4c272b4bc0a80c0f9f805766de29bac0bc055",
+                            },
+                            {
+                                "path": "linux",
+                                "mode": "040000",
+                                "type": "tree",
+                                "sha": "9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                "request": {
+                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a"
+                },
+                "response": {
+                    "status": 200,
+                    "body": {
+                        "sha": "9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
+                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
+                        "tree": [
+                            {
+                                "path": "add-apt-repository.md",
+                                "mode": "100644",
+                                "type": "blob",
+                                "sha": "154a62ebd45b38671f1ec4604eeaa8932a55f85c",
+                                "size": 402,
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/154a62ebd45b38671f1ec4604eeaa8932a55f85c",
+                            },
+                            {
+                                "path": "adduser.md",
+                                "mode": "100644",
+                                "type": "blob",
+                                "sha": "c495e0cd9bd62bf6b7360dd60ab6b25d0232dc05",
+                                "size": 653,
+                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/c495e0cd9bd62bf6b7360dd60ab6b25d0232dc05",
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/add-apt-repository.md"
+                },
+                "response": {
+                    "status": 200,
+                    "body": (
+                        "# add-apt-repository",
+                        "",
+                        "> Manages apt repository definitions.",
+                        "",
+                        "- Add a new apt repository:",
+                        "",
+                        "`add-apt-repository {{repository_spec}}`",
+                        "",
+                        "- Remove an apt repository:",
+                        "",
+                        "`add-apt-repository --remove {{repository_spec}}`",
+                        "",
+                        "- Update the package cache after adding a repository:",
+                        "",
+                        "`add-apt-repository --update {{repository_spec}}`",
+                        "",
+                        "- Enable source packages:",
+                        "",
+                        "`add-apt-repository --enable-source {{repository_spec}}`",
+                    ),
+                },
+            },
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/adduser.md"
+                },
+                "response": {
+                    "status": 200,
+                    "body": (
+                        "# adduser",
+                        "",
+                        "> User addition utility.",
+                        "",
+                        "- Create a new user with a default home directory and prompt the user to set a password:",
+                        "",
+                        "`adduser {{username}}`",
+                        "",
+                        "- Create a new user without a home directory:",
+                        "",
+                        "`adduser --no-create-home {{username}}`",
+                        "",
+                        "- Create a new user with a home directory at the specified path:",
+                        "",
+                        "`adduser --home {{path/to/home}} {{username}}`",
+                        "",
+                        "- Create a new user with the specified shell set as the login shell:",
+                        "",
+                        "`adduser --shell {{path/to/shell}} {{username}}`",
+                        "",
+                        "- Create a new user belonging to the specified group:",
+                        "",
+                        "`adduser --ingroup {{group}} {{username}}`",
+                        "",
+                        "- Add an existing user to the specified group:",
+                        "",
+                        "`adduser {{username}} {{group}}`",
+                    ),
+                },
+            },
+        ]
+        responses.add(
+            responses.GET,
+            entries[0]["request"]["url"],
+            json=entries[0]["response"]["body"],
+            status=entries[0]["response"]["status"],
+        )
+        responses.add(
+            responses.GET,
+            entries[1]["request"]["url"],
+            json=entries[1]["response"]["body"],
+            status=entries[1]["response"]["status"],
+        )
+        responses.add(
+            responses.GET,
+            entries[2]["request"]["url"],
+            json=entries[2]["response"]["body"],
+            status=entries[2]["response"]["status"],
+        )
+        responses.add(
+            responses.GET,
+            entries[3]["request"]["url"],
+            json=entries[3]["response"]["body"],
+            status=entries[3]["response"]["status"],
+        )
+        responses.add(
+            responses.GET,
+            entries[4]["request"]["url"],
+            body="\n".join(entries[4]["response"]["body"]),
+            status=entries[4]["response"]["status"],
+        )
+        responses.add(
+            responses.GET,
+            entries[5]["request"]["url"],
+            body="\n".join(entries[5]["response"]["body"]),
+            status=entries[5]["response"]["status"],
+        )
+        contents = SnippyTldr(Logger(), "")
+        assert len(contents) == 2
+        assert next(contents) == snippets[0]
+        assert next(contents) == snippets[1]
+        assert len(responses.calls) == 6
 
     @staticmethod
     @responses.activate
@@ -71,7 +324,8 @@ class TestSnippyTldr(object):
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'
+            # noqa pylint: disable=line-too-long
         )
         requests = [
             "https://github.com/tldr-pages/tldr/tree/master/pages",
@@ -102,7 +356,8 @@ class TestSnippyTldr(object):
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'
+            # noqa pylint: disable=line-too-long
         )
         requests = [
             "https://github.com/tldr-pages/tldr/tree/master/pages",
@@ -133,7 +388,8 @@ class TestSnippyTldr(object):
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.pt-BR/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.pt-BR/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.pt-BR/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.pt-BR/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.pt-BR/windows">windows</a></span>'
+            # noqa pylint: disable=line-too-long
         )
         requests = [
             "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR",
@@ -163,7 +419,8 @@ class TestSnippyTldr(object):
             '<span class="css-truncate-target"><a class="js-navigation-open" title="common" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.zh/common">common</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.zh/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.zh/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.zh/windows">windows</a></span>'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.zh/windows">windows</a></span>'
+            # noqa pylint: disable=line-too-long
         )
         requests = [
             "https://github.com/tldr-pages/tldr/tree/master/pages.zh",
@@ -214,7 +471,8 @@ class TestSnippyTldr(object):
         files = (
             '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="units.md" id="0c1af7a5ee4b57a644643230ed526db2-5d01b9086ff0bf4874b2757dbbde5233dd6ff3f7" href="/tldr-pages/tldr/blob/master/pages/osx/units.md">units.md</a></span>\n'  # noqa pylint: disable=line-too-long
             '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="w.md" id="0dd87f8dc5cbfa861c16c5ad3c332ab4-1cf83af6e84ea532e6c09a1cead470b6922c6a91" href="/tldr-pages/tldr/blob/master/pages/osx/w.md">w.md</a></span>\n'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="wacaw.md" id="6737e3eb2cef3810832f9b5adc372ea4-132b0b691c4c40bd79047f7b70afadd49dc43cd5" href="/tldr-pages/tldr/blob/master/pages/osx/wacaw.md">wacaw.md</a></span>\n'  # noqa pylint: disable=line-too-long
+            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="wacaw.md" id="6737e3eb2cef3810832f9b5adc372ea4-132b0b691c4c40bd79047f7b70afadd49dc43cd5" href="/tldr-pages/tldr/blob/master/pages/osx/wacaw.md">wacaw.md</a></span>\n'
+            # noqa pylint: disable=line-too-long
         )
         requests = [
             "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
@@ -326,7 +584,7 @@ class TestSnippyTldr(object):
 
         uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages/osx"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
@@ -334,8 +592,8 @@ class TestSnippyTldr(object):
         # uri = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/alpine.md"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/alpine.md"
         # uri = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/alpine.md"
-        uri = "https://github.com/tldr-pages/tldr/tree/italian/pages.it"
-        uri = "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages"
+        # uri = "https://github.com/tldr-pages/tldr/tree/italian/pages.it"
+        # uri = "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
         # uri = 'file:../tldr/pages/linux/'

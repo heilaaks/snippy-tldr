@@ -42,7 +42,7 @@ except ImportError:
     from tests.conftest import Schema
 
 
-def snippy_import_hook(logger, uri):
+def snippy_import_hook(logger, file):
     """Import content for Snippy tool.
 
     This is an import hook that must return an iterator object. The iterator
@@ -51,7 +51,9 @@ def snippy_import_hook(logger, uri):
     in the ``snippy.plugins.Schema`` class.
 
     The ``snippy.plugins.Parser`` class may be used to parse the source data
-    to a JSON content for Snippy.::
+    to a JSON content for Snippy.
+
+    ::
 
         # Tldr man pages hierarchical layers.
         #
@@ -79,10 +81,10 @@ def snippy_import_hook(logger, uri):
 
     Args:
         logger (obj): Logger to be used with the plugin.
-        uri (str): URI or path where the data is imported.
+        file (str): Value from the Snippy ``--file`` command line option.
 
     Returns:
-        obj: Iterator object that stores the Snippy content from the plugin.
+        obj: Iterator object that stores the content from plugin to Snippy tool.
 
     Examples
     --------
@@ -92,9 +94,9 @@ def snippy_import_hook(logger, uri):
     >>>
     >>> class SnippyTldr(object):
     >>>
-    >>>     def __init__(self, logger, uri):
+    >>>     def __init__(self, logger, file):
     >>>         self._logger = logger
-    >>>         self._uri = uri
+    >>>         self._uri = file
     >>>         self._schema = Schema()
     >>>         self._content = []
     >>>         self._i = 0
@@ -132,19 +134,20 @@ def snippy_import_hook(logger, uri):
     >>>         return content
     """
 
-    return SnippyTldr(logger, uri)
+    return SnippyTldr(logger, file)
 
 
 class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     """Plugin to import tldr man pages for snippy."""
 
-    GITHUB_RAW = "https://raw.githubusercontent.com/tldr-pages/tldr"
+    GITHUB_API = "https://api.github.com/repos/tldr-pages/tldr/"
+    GITHUB_RAW = "https://raw.githubusercontent.com/tldr-pages/tldr/"
     TLDR_DEFAULT_URI = "https://github.com/tldr-pages/tldr/tree/master/pages/linux"
     TLDR_PLATFORMS = ("common", "linux", "osx", "sunos", "windows")
 
     RE_MATCH_GITHUB_URL = re.compile(
         r"""
-        http[s]?://github.com/tldr-pages/tldr/(tree|blob)
+        http[s]?://github.com/tldr-pages/tldr/(tree|blob)/
         """,
         re.VERBOSE,
     )
@@ -191,44 +194,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         (?P<branch>.*)/         # Catch branches like 'master' or 'waldyrious/alt-syntax'.
         (?P<translation>%s)     # Catch translations like 'pages' or 'pages.pt-BR'.
         (?:[/]?|$)              # Match optional trailing slash or end of string.
-        """
-        % RE_MATCH_TLDR_TRANSLATION,
-        re.VERBOSE,
-    )
-
-    RE_CATCH_TLDR_PAGE_HTML = re.compile(
-        r"""
-        /tldr-pages/tldr/tree/  # Match part of an URL in HTML page.
-        \S+/                    # Match branch or tag.
-        %s/                     # Match tldr pages and page translations.
-        (?P<page>.*?)           # Catch tldr page ungreedily.
-        ["]{1}                  # Match trailing quotation mark.
-        """
-        % RE_MATCH_TLDR_TRANSLATION,
-        re.VERBOSE,
-    )
-
-    RE_CATCH_TLDR_PAGE_URI = re.compile(
-        r"""
-        /%s/            # Match tldr pages path.
-        (?P<page>.*?)/  # Catch tldr page.
-        """
-        % RE_MATCH_TLDR_TRANSLATION,
-        re.VERBOSE,
-    )
-
-    RE_CATCH_TLDR_FILENAME = re.compile(
-        r"""
-        .*[\/]         # Match greedily the last leading forward slash before the filename.
-        (\S+[.]{1}md)  # Catch filename with the md file extension.
-        [\"]{1}        # Match trailing quotation mark in HTML after filename
-        """,
-        re.VERBOSE,
-    )
-
-    RE_MATCH_TLDR_PAGES = re.compile(
-        r"""
-        ^%s  # Match tldr pages in the beginning of a string.
         """
         % RE_MATCH_TLDR_TRANSLATION,
         re.VERBOSE,
@@ -305,8 +270,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     def __init__(self, logger, uri):
         self._logger = logger
         self._uri = self._get_uri(uri)
-        self._uri_scheme = urlparse(self._uri).scheme
-        self._uri_path = urlparse(self._uri).path
         self._schema = Schema()
         self._snippets = []
         self._i = 0
@@ -369,18 +332,18 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     def _read_tldr_pages(self):
         """Read all ``tldr pages`` from the URI."""
 
-        branches = self._get_tlrd_pages(self._uri)
-        for branch in branches:
-            for translation in branches[branch]:
-                for platform in branches[branch][translation]:
-                    self._read_pages(platform, branches[branch][translation][platform])
+        pages = self._get_tlrd_pages(self._uri)
+        for translation in pages:
+            for platform in pages[translation]:
+                self._read_pages(platform, pages[translation][platform])
 
     def _get_tlrd_pages(self, uri):
         """Get all ``tldr pages``.
 
         Read all tldr pages from the given URI. The pages are returned in a
-        dictionary that contains keys for the branch, translation and tldr
-        platform. The tldr pages are list of full GitHib raw URLs to read.
+        dictionary that contains keys for translations and tldr platforms.
+        The tldr pages are in a list of full GitHub raw URLs under each
+        platform.
 
         Args:
             uri (str): URI where the tldr pages are read.
@@ -389,16 +352,15 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             dict: All tldr pages with GitHib raw URL.
         """
 
-        def count(branches):
-            translations = 0
-            platforms = 0
+        def count(data):
             pages = 0
-            for branch in branches:
-                for translation in branches[branch]:
-                    translations = translations + 1
-                    for platform in branches[branch][translation]:
-                        platforms = platforms + 1
-                        pages = pages + len(branches[branch][translation][platform])
+            platforms = 0
+            translations = 0
+            for translation in data:
+                translations = translations + 1
+                for platform in data[translation]:
+                    platforms = platforms + 1
+                    pages = pages + len(data[translation][platform])
 
             self._logger.debug(
                 "read total of %d tldr pages from %d translations and %d platforms",
@@ -415,12 +377,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 match.group("page"),
                 match.group("branch"),
             )
-            print(match.group("page"))
-            pages = {
-                match.group("branch"): {
-                    match.group("translation"): {match.group("platform"): (uri,)}
-                }
-            }
+            pages = {match.group("translation"): {match.group("platform"): (uri,)}}
             count(pages)
 
             return pages
@@ -432,9 +389,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                 match.group("platform"),
                 match.group("branch"),
             )
-            print("platform: %s" % match.group("platform"))
-            print("translation: %s" % match.group("translation"))
-            print("branch: %s" % match.group("branch"))
             pages = self._get_github_tldr_pages(
                 match.group("branch"),
                 (match.group("translation"),),
@@ -457,8 +411,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         return pages
 
-    @staticmethod
-    def _get_github_tldr_pages(branch, translations, platforms):
+    def _get_github_tldr_pages(self, branch, translations, platforms):
         """Get tldr pages.
 
         Method takes a list of translations and platforms to try to read all
@@ -473,151 +426,68 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             dict: Tldr pages under given translations and platforms.
         """
 
-        def _read_translations(url, data, pages):
+        def read_translations(url, data, pages):
             """Read translations from the data.
 
             Args:
                 url (str): URL to be added with translations, platforms and tldr pages.
                 data (dict): GitHub JSON dictionary for a branch translations.
-                pages (dict): Tldr pages under a branch.
-
-            Returns:
-                dict: Tldr pages under given translations and platforms.
+                pages (dict): Tldr pages stored under the branch.
             """
 
             for translation in translations:
-                url_ = url + "/" + translation
+                url_ = self._join_paths(url, translation)
                 translation_url = next(
                     tree for tree in data["tree"] if tree["path"] == translation
                 )["url"]
                 platform_data = requests.get(translation_url).json()
                 pages[translation] = {}
-                _read_platforms(url_, platforms, platform_data, pages[translation])
+                read_platforms(url_, platforms, platform_data, pages[translation])
 
-        def _read_platforms(url, platforms, data, pages):
+        def read_platforms(url, platforms, data, pages):
             """Read platforms from the data.
 
             Args:
                 url (str): URL to be added with platforms and tldr pages.
                 data (dict): GitHub JSON dictionary for a branch platforms.
-                pages (dict): Tldr pages under a platform.
+                pages (dict): Tldr pages stored under each platforms.
             """
 
             for platform in platforms:
-                print("platform: %s" % platform)
                 pages[platform] = []
                 try:
                     platform_url = next(
                         tree for tree in data["tree"] if tree["path"] == platform
                     )["url"]
                     pages_data = requests.get(platform_url).json()
-                    url_ = url + "/" + platform
-                    _read_pages(url_, pages_data, pages[platform])
+                    url_ = self._join_paths(url, platform)
+                    read_pages(url_, pages_data, pages[platform])
                 except StopIteration:
                     pass
 
-        def _read_pages(url, data, pages):
+        def read_pages(url, data, pages):
             """Read tldr pages under the data
 
             Args:
                 url (str): URL to be used with the read tldr pages.
                 data (dict): GitHub JSON dictionary for a branch tldr pages.
-                pages (dict): Tldr pages under a platform.
+                pages (dict): Tldr pages stored under a platform.
             """
 
             for tree in data["tree"]:
                 if tree["type"] == "blob" and tree["path"].endswith(".md"):
-                    pages.append(url + "/" + tree["path"])
+                    pages.append(self._join_paths(url, tree["path"]))
 
         pages = {}
-        repo_url = (
-            "https://api.github.com/repos/tldr-pages/tldr/" + "branches/" + branch
-        )
+        repo_url = self._join_paths(self.GITHUB_API, 'branches')
+        repo_url = self._join_paths(repo_url, branch)
         repo_data = requests.get(repo_url).json()
         branch_url = repo_data["commit"]["commit"]["tree"]["url"]
         translations_data = requests.get(branch_url).json()
-        pages[branch] = {}
-        url = "https://raw.githubusercontent.com/tldr-pages/tldr/" + branch
-        _read_translations(url, translations_data, pages[branch])
-        print(pages)
+        url = self._join_paths(self.GITHUB_RAW, branch)
+        read_translations(url, translations_data, pages)
 
         return pages
-
-    def _github_api_read_pages(self):
-        """
-
-
-        """
-
-    def _read_tldr_page_files(self, uri):
-        """Read ``tldr files`` from a ``page``.
-
-        Args:
-            uri (str): URI or path where the ``tldr files`` are read.
-
-        Returns:
-            dict: All tldr files in a dictionary with a tldr ``page`` key.
-        """
-
-        filenames = {}
-        tldr_page = os.path.basename(os.path.normpath(uri))
-        if tldr_page not in self.TLDR_PLATFORMS:
-            self._logger.debug("unknown tldr man page: %s", uri)
-            return filenames
-
-        files = []
-        if "http" in uri:
-            response = requests.get(uri.strip("/"))
-            names = sorted(set(self.RE_CATCH_TLDR_FILENAME.findall(response.text)))
-            for filename in names:
-                files.append(self._join_paths(uri, filename))
-            files = files[:3]
-            filenames = {tldr_page: files}
-        else:
-            print("local files")
-            self._read_tldr_page(uri, "page")
-        # print("tldr files: %s" % filenames)
-        return filenames
-
-    def _get_tldr_pages_old(self):
-        """Read tldr pages from URI or file path.
-
-        The give URI is pointing to ``tldr/pages/``. The URI may be a remote
-        or localhost URI. There can be any amount of pages under the URI but
-        only the known tldr pages are read. Unknown directories from the URI
-        given by user are discarded.
-
-        The returned list of tldr pages is in format that allows reading the
-        tldr snippets under each tldr page.
-
-        Returns:
-            list: Tldr pages with URI or path.
-        """
-
-        pages = []
-        if "http" in self._uri_scheme:
-            html = requests.get(self._uri.strip("/")).text
-            # print("====")
-            # print("responses %s" % html)
-            pages = self.RE_CATCH_TLDR_PAGE_HTML.findall(html)
-        else:
-            try:
-                pages = os.listdir(self._uri_path)
-            except FileNotFoundError:
-                self._logger.debug(
-                    "localhost path was not accessible: %s", self._uri_path
-                )
-
-        # Pick only the known tldr pages and format the list of pages to be
-        # file paths or URLs to be directly usable by caller.
-        pages = sorted(list(set(self.TLDR_PLATFORMS) & set(pages)))
-        pages_ = []
-        for page in pages:
-            pages_.append(self._join_paths(self._uri, page))
-        self._logger.debug("parsed tldr pages: %s", pages_)
-        # print("pages: %s" % pages_)
-
-        return pages_
 
     def _read_pages(self, platform, pages):
         """Read tldr pages from the platform.
@@ -640,8 +510,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         snippet = ""
         uri = self.RE_MATCH_GITHUB_URL.sub(self.GITHUB_RAW, uri)
-        if "http" in self._uri_scheme:
-            print("uri %s" % uri)
+        if "http" in urlparse(uri).scheme:
             self._logger.debug("request tldr page: %s", uri)
             page = requests.get(uri).text
         else:
@@ -651,13 +520,12 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         snippet = self._parse_tldr_page(uri, platform, page)
         if snippet and self._schema.validate(snippet):
-            print("validated: %s" % snippet)
             self._snippets.append(snippet)
         else:
-            print("not validated")
             self._logger.debug("failed to parse tldr man page: %s :from: %s", uri, page)
 
-    def _join_paths(self, uri, path_object):
+    @staticmethod
+    def _join_paths(uri, path_object):
         """Join URI or path to an object.
 
         Args:
@@ -668,7 +536,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             str: Joined URI or path.
         """
 
-        if "http" in self._uri_scheme:
+        if "http" in urlparse(uri).scheme:
             uri_ = uri
             if not uri_.endswith("/"):
                 uri_ = uri_ + "/"
@@ -796,17 +664,17 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         return Parser.format_name(Const.SNIPPET, name)
 
     @staticmethod
-    def _format_list(list_):
+    def _format_list(data):
         """Remove empty strings and trim newlines from a list.
 
         Args
-            list_ (list): List of strings.
+            data (list): List of strings.
 
         Returns:
             list: Formatted list of tldr man page snippets.
         """
 
-        list_ = map(Const.TEXT_TYPE.strip, list_)
+        list_ = map(Const.TEXT_TYPE.strip, data)
         list_ = list(filter(None, list_))
 
         return list_
