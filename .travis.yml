@@ -1,5 +1,3 @@
-sudo: false
-
 language: python
 dist: xenial
 cache: pip
