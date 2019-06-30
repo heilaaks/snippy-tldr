@@ -479,7 +479,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
                     pages.append(self._join_paths(url, tree["path"]))
 
         pages = {}
-        repo_url = self._join_paths(self.GITHUB_API, 'branches')
+        repo_url = self._join_paths(self.GITHUB_API, "branches")
         repo_url = self._join_paths(repo_url, branch)
         repo_data = requests.get(repo_url).json()
         branch_url = repo_data["commit"]["commit"]["tree"]["url"]
