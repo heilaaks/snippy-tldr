@@ -17,6 +17,10 @@ install:
   - make install-coverage
   - make install-tests
 
+before_script:
+  - git clone https://github.com/heilaaks/snippy.git && cd snippy
+  - make install QUIET=
+
 script:
   - make tests
 
