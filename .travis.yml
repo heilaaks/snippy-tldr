@@ -18,8 +18,8 @@ install:
   - make install-tests
 
 before_script:
-  - git clone https://github.com/heilaaks/snippy.git && cd snippy
-  - make install QUIET=
+  - git clone https://github.com/heilaaks/snippy.git
+  - make -C snippy install QUIET=
 
 script:
   - make tests
