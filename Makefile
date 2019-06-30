@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Disable default suffixes and rules to reduce spam with make --debug
-# option. This is a Python project and these builtins are not needed.
+# option. This is a Python project and these built-ins are not needed.
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-builtin-variables
 
@@ -52,21 +52,21 @@ docs:
 
 .PHONY: tests
 tests:
-	$(PYTHON) -m pytest -x ${COVERAGE}
+	$(PYTHON) -m pytest -x ${COVERAGE} tests/
 
 tests-tox:
 	tox
 
 coverage:
-	$(PYTHON) -m pytest ${COVERAGE} --cov-report html
+	$(PYTHON) -m pytest ${COVERAGE} --cov-report html tests/
 
 lint:
 	$(PYTHON) -m pylint --jobs=0 snippy_tldr/
 	$(PYTHON) -m pylint --jobs=0 tests/
 
 format:
-	black snippy_tldr
-	black tests
+	black snippy_tldr/
+	black tests/
 	black setup.py
 
 clean: clean-build clean-pyc clean-tests
