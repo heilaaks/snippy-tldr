@@ -10,4 +10,4 @@ ignored-classes=responses
 [FORMAT]
 
 # Suited as of now for long lines in tests cases.
-max-line-length=120
+max-line-length=150
