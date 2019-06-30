@@ -83,4 +83,5 @@ Design
 
 .. automodule:: snippy_tldr.plugin
    :members:
+   :private-members:
    :member-order: bysource
