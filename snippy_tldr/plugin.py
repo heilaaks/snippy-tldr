@@ -35,6 +35,7 @@ try:
     from snippy.plugins import Const
     from snippy.plugins import Parser
     from snippy.plugins import Schema
+    from snippy.plugins import Cause
 
 except ImportError:
     from tests.conftest import Const
@@ -482,6 +483,8 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         repo_url = self._join_paths(self.GITHUB_API, "branches")
         repo_url = self._join_paths(repo_url, branch)
         resp = requests.get(repo_url)
+        if self.is_api_error(resp):
+            return pages
         data = resp.json()
         branch_url = data["commit"]["commit"]["tree"]["url"]
         translations_data = requests.get(branch_url).json()
@@ -546,6 +549,26 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             path = os.path.join(uri, path_object)
 
         return path
+
+    def is_api_error(self, http):
+        """Test if GitHub API response was an error.
+
+        Args:
+            http (obj): Request package response object.
+
+        Returns:
+            bool: True in case of REST API error response.
+        """
+
+        if http.status_code != 200:
+            if http.headers.get('X-RateLimit-Remaining', '0') == '0':
+                Cause.push(Cause.HTTP_FORBIDDEN, 'github api rate limit reached')
+            else:
+                Cause.push(Cause.HTTP_FORBIDDEN, 'github api failure:  {}'.format(http.status_code))
+            self._logger.debug("github api response %s with headers: %s" %(http.status_code, http.headers))
+            return True
+
+        return False
 
     def _parse_tldr_page(self, source, platform, page):
         """Parse and validate one tldr man page.
