@@ -481,8 +481,9 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         pages = {}
         repo_url = self._join_paths(self.GITHUB_API, "branches")
         repo_url = self._join_paths(repo_url, branch)
-        repo_data = requests.get(repo_url).json()
-        branch_url = repo_data["commit"]["commit"]["tree"]["url"]
+        resp = requests.get(repo_url)
+        data = resp.json()
+        branch_url = data["commit"]["commit"]["tree"]["url"]
         translations_data = requests.get(branch_url).json()
         url = self._join_paths(self.GITHUB_RAW, branch)
         read_translations(url, translations_data, pages)
@@ -569,6 +570,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         snippet["name"] = self._read_tldr_name(page)
         snippet["groups"] = Parser.format_groups(Const.SNIPPET, platform)
         snippet["tags"] = Parser.format_tags(Const.SNIPPET, platform)
+        snippet["links"] = Parser.format_links(Const.SNIPPET, source)
         snippet["source"] = source
 
         return snippet

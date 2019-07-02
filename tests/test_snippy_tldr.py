@@ -23,354 +23,281 @@ import pytest
 import responses
 
 from snippy_tldr.plugin import SnippyTldr
+from tests.lib.helper import GitHubApi
+from tests.lib.helper import Snippet
+from tests.lib.helper import TldrPage
 
 
-# The responses module does not seem to work when responses are set
-# in a for loop by iterating the value of a list. It seems that the
-# module takes a reference to value (pointer to list) and that gets
-# updated in the responses module in every loop.
-#
-# This causes the responses always to use the last value in a loop
-# as a first and only response. The iteration must be made without
-# actually iterating the values but the size of the list.
-
-
+# pylint: disable=unsupported-assignment-operation, unsubscriptable-object
 class TestSnippyTldr(object):
     """Test snippy-tldr plugin."""
 
     @staticmethod
     @responses.activate
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_001():
+    def test_github_tldr_page_001():
+        """Test reading one tldr ``page`` from the GitHib.
+
+        Read one tldr page directly from the GitHub. The given URI is the URL
+        copied from a web browser navigation link. This is the GitHub URL with
+        a 'blob' data.
+        """
+
+        expect = [
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md",
+                    "headers": {},
+                },
+                "response": {"status": 200, "content": {"text": TldrPage.pushd}},
+            },
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/adduser.md",
+                    "headers": {},
+                },
+                "response": {"status": 200, "content": {"text": TldrPage.adduser}},
+            },
+        ]
+        actual = GitHubApi.mock(expect)
+        file = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 1
+        assert next(contents) == Snippet.pushd
+
+        file = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/adduser.md"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 1
+        assert next(contents) == Snippet.adduser
+
+        assert len(responses.calls) == 2
+        assert GitHubApi.validate(expect, actual)
+
+    @staticmethod
+    @responses.activate
+    def test_github_tldr_page_002():
+        """Test reading one tldr ``page`` from the GitHib.
+
+        Read one tldr page directly from the GitHub. The given URI is the raw
+        URL of the tldr page.
+        """
+
+        expect = [
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md",
+                    "headers": {},
+                },
+                "response": {"status": 200, "content": {"text": TldrPage.pushd}},
+            }
+        ]
+        actual = GitHubApi.mock(expect)
+        file = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 1
+        assert next(contents) == Snippet.pushd
+        assert len(responses.calls) == 1
+        assert GitHubApi.validate(expect, actual)
+
+    @staticmethod
+    @responses.activate
+    def test_github_tldr_page_003():
+        """Test reading one tldr ``page`` from the GitHib.
+
+        Read one tldr page directly from the GitHub. The given URI is a 'tree'
+        URL that redirects in GitHub to the 'blob' URL. Using a 'tree' URL is
+        not exactly correct but it must still work. For example GitHub raw HTML
+        page uses 'tree' URL to point to files for some reason.
+        """
+
+        expect = [
+            {
+                "request": {
+                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md",
+                    "headers": {},
+                },
+                "response": {"status": 200, "content": {"text": TldrPage.pushd}},
+            }
+        ]
+        actual = GitHubApi.mock(expect)
+        file = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 1
+        assert next(contents) == Snippet.pushd
+        assert len(responses.calls) == 1
+        assert GitHubApi.validate(expect, actual)
+
+    @staticmethod
+    @responses.activate
+    def test_github_tldr_platform_001():
         """Test reading tldr pages from GitHib under one ``platform``.
 
         Read default tldr man pages from English translated Linux platform
         when the tldr URI is not provided to the plugin.
         """
 
-        snippets = [
-            {
-                "category": "snippet",
-                "data": [
-                    "add-apt-repository {{repository_spec}}  #  Add a new apt repository.",
-                    "add-apt-repository --remove {{repository_spec}}  #  Remove an apt repository.",
-                    "add-apt-repository --update {{repository_spec}}  #  Update the package cache after adding a repository.",
-                    "add-apt-repository --enable-source {{repository_spec}}  #  Enable source packages.",
-                ],
-                "brief": "Manages apt repository definitions.",
-                "description": "Manages apt repository definitions.",
-                "name": "add-apt-repository",
-                "groups": ["linux"],
-                "tags": ["linux"],
-                "source": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/add-apt-repository.md",
-            },
-            {
-                "category": "snippet",
-                "data": [
-                    "adduser {{username}}  #  Create a new user with a default home directory and prompt the user to set a password.",
-                    "adduser --no-create-home {{username}}  #  Create a new user without a home directory.",
-                    "adduser --home {{path/to/home}} {{username}}  #  Create a new user with a home directory at the specified path.",
-                    "adduser --shell {{path/to/shell}} {{username}}  #  Create a new user with the specified shell set as the login shell.",
-                    "adduser --ingroup {{group}} {{username}}  #  Create a new user belonging to the specified group.",
-                    "adduser {{username}} {{group}}  #  Add an existing user to the specified group.",
-                ],
-                "brief": "User addition utility.",
-                "description": "User addition utility.",
-                "name": "adduser",
-                "groups": ["linux"],
-                "tags": ["linux"],
-                "source": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/adduser.md",
-            },
-        ]
-
-        entries = [
-            {
-                "request": {
-                    "url": "https://api.github.com/repos/tldr-pages/tldr/branches/master"
-                },
-                "response": {
-                    "status": 200,
-                    "body": {
-                        "name": "master",
-                        "commit": {
-                            "sha": "d496b0c18f450c4504c0c643ade531e79fdd1484",
-                            "node_id": "MDY6Q29tbWl0MTUwMTk5NjI6ZDQ5NmIwYzE4ZjQ1MGM0NTA0YzBjNjQzYWRlNTMxZTc5ZmRkMTQ4NA==",
-                            "commit": {
-                                "message": "astyle: reword description (#3150)",
-                                "tree": {
-                                    "sha": "67c429acf561194366a25a28fe73fb33ec0739dc",
-                                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc",
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            {
-                "request": {
-                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc"
-                },
-                "response": {
-                    "status": 200,
-                    "body": {
-                        "sha": "67c429acf561194366a25a28fe73fb33ec0739dc",
-                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/67c429acf561194366a25a28fe73fb33ec0739dc",
-                        "tree": [
-                            {
-                                "path": ".editorconfig",
-                                "type": "blob",
-                                "sha": "197cb78962bd0973086f89d4421138e1d82f9080",
-                                "size": 235,
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/197cb78962bd0973086f89d4421138e1d82f9080",
-                            },
-                            {
-                                "path": "pages.pt-BR",
-                                "mode": "040000",
-                                "type": "tree",
-                                "sha": "6b55cdc79c194f1951f3cd75f8908732d8a6e451",
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/6b55cdc79c194f1951f3cd75f8908732d8a6e451",
-                            },
-                            {
-                                "path": "pages",
-                                "mode": "040000",
-                                "type": "tree",
-                                "sha": "64605406ef576220cbb6b59f64c525778e1bc6b8",
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8",
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                "request": {
-                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8"
-                },
-                "response": {
-                    "status": 200,
-                    "body": {
-                        "sha": "64605406ef576220cbb6b59f64c525778e1bc6b8",
-                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/64605406ef576220cbb6b59f64c525778e1bc6b8",
-                        "tree": [
-                            {
-                                "path": "common",
-                                "mode": "040000",
-                                "type": "tree",
-                                "sha": "63f4c272b4bc0a80c0f9f805766de29bac0bc055",
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/63f4c272b4bc0a80c0f9f805766de29bac0bc055",
-                            },
-                            {
-                                "path": "linux",
-                                "mode": "040000",
-                                "type": "tree",
-                                "sha": "9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                "request": {
-                    "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a"
-                },
-                "response": {
-                    "status": 200,
-                    "body": {
-                        "sha": "9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
-                        "url": "https://api.github.com/repos/tldr-pages/tldr/git/trees/9ec6d298a44e3ff1b47f1a6d98942826a598c54a",
-                        "tree": [
-                            {
-                                "path": "add-apt-repository.md",
-                                "mode": "100644",
-                                "type": "blob",
-                                "sha": "154a62ebd45b38671f1ec4604eeaa8932a55f85c",
-                                "size": 402,
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/154a62ebd45b38671f1ec4604eeaa8932a55f85c",
-                            },
-                            {
-                                "path": "adduser.md",
-                                "mode": "100644",
-                                "type": "blob",
-                                "sha": "c495e0cd9bd62bf6b7360dd60ab6b25d0232dc05",
-                                "size": 653,
-                                "url": "https://api.github.com/repos/tldr-pages/tldr/git/blobs/c495e0cd9bd62bf6b7360dd60ab6b25d0232dc05",
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                "request": {
-                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/add-apt-repository.md"
-                },
-                "response": {
-                    "status": 200,
-                    "body": (
-                        "# add-apt-repository",
-                        "",
-                        "> Manages apt repository definitions.",
-                        "",
-                        "- Add a new apt repository:",
-                        "",
-                        "`add-apt-repository {{repository_spec}}`",
-                        "",
-                        "- Remove an apt repository:",
-                        "",
-                        "`add-apt-repository --remove {{repository_spec}}`",
-                        "",
-                        "- Update the package cache after adding a repository:",
-                        "",
-                        "`add-apt-repository --update {{repository_spec}}`",
-                        "",
-                        "- Enable source packages:",
-                        "",
-                        "`add-apt-repository --enable-source {{repository_spec}}`",
-                    ),
-                },
-            },
-            {
-                "request": {
-                    "url": "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/adduser.md"
-                },
-                "response": {
-                    "status": 200,
-                    "body": (
-                        "# adduser",
-                        "",
-                        "> User addition utility.",
-                        "",
-                        "- Create a new user with a default home directory and prompt the user to set a password:",
-                        "",
-                        "`adduser {{username}}`",
-                        "",
-                        "- Create a new user without a home directory:",
-                        "",
-                        "`adduser --no-create-home {{username}}`",
-                        "",
-                        "- Create a new user with a home directory at the specified path:",
-                        "",
-                        "`adduser --home {{path/to/home}} {{username}}`",
-                        "",
-                        "- Create a new user with the specified shell set as the login shell:",
-                        "",
-                        "`adduser --shell {{path/to/shell}} {{username}}`",
-                        "",
-                        "- Create a new user belonging to the specified group:",
-                        "",
-                        "`adduser --ingroup {{group}} {{username}}`",
-                        "",
-                        "- Add an existing user to the specified group:",
-                        "",
-                        "`adduser {{username}} {{group}}`",
-                    ),
-                },
-            },
-        ]
-        responses.add(
-            responses.GET,
-            entries[0]["request"]["url"],
-            json=entries[0]["response"]["body"],
-            status=entries[0]["response"]["status"],
-        )
-        responses.add(
-            responses.GET,
-            entries[1]["request"]["url"],
-            json=entries[1]["response"]["body"],
-            status=entries[1]["response"]["status"],
-        )
-        responses.add(
-            responses.GET,
-            entries[2]["request"]["url"],
-            json=entries[2]["response"]["body"],
-            status=entries[2]["response"]["status"],
-        )
-        responses.add(
-            responses.GET,
-            entries[3]["request"]["url"],
-            json=entries[3]["response"]["body"],
-            status=entries[3]["response"]["status"],
-        )
-        responses.add(
-            responses.GET,
-            entries[4]["request"]["url"],
-            body="\n".join(entries[4]["response"]["body"]),
-            status=entries[4]["response"]["status"],
-        )
-        responses.add(
-            responses.GET,
-            entries[5]["request"]["url"],
-            body="\n".join(entries[5]["response"]["body"]),
-            status=entries[5]["response"]["status"],
-        )
+        expect = GitHubApi.default
+        actual = GitHubApi.mock(expect)
         contents = SnippyTldr(Logger(), "")
+        assert len(contents) == 2
+        assert next(contents) == Snippet.add_apt_repository
+        assert next(contents) == Snippet.adduser
+        assert len(responses.calls) == 6
+        assert GitHubApi.validate(expect, actual)
+
+    @staticmethod
+    @responses.activate
+    def test_github_tldr_platform_002():
+        """Test reading tldr pages from GitHib under one ``platform``.
+
+        Read all English translated tldr pages from linux platform in GitHub
+        master branch. The URL has a trailing slash.
+        """
+
+        expect = GitHubApi.default
+        actual = GitHubApi.mock(expect)
+        file = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 2
+        assert next(contents) == Snippet.add_apt_repository
+        assert next(contents) == Snippet.adduser
+        assert len(responses.calls) == 6
+        assert GitHubApi.validate(expect, actual)
+
+    @staticmethod
+    @responses.activate
+    def test_github_tldr_platform_003():
+        """Test reading tldr pages from GitHib under one ``platform``.
+
+        Read all Italian translated tldr pages from common platform in GitHub
+        italian branch.
+        """
+
+        expect = GitHubApi.default
+        expect[0]["request"][
+            "url"
+        ] = "https://api.github.com/repos/tldr-pages/tldr/branches/italian"
+        expect[1]["response"]["content"]["json"]["tree"][2]["path"] = "pages.it"
+        expect[3]["request"][
+            "url"
+        ] = "https://api.github.com/repos/tldr-pages/tldr/git/trees/63f4c272b4bc0a80c0f9f805766de29bac0bc055"
+        expect[4]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/add-apt-repository.md"
+        expect[5]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/adduser.md"
+        snippets = [Snippet.add_apt_repository, Snippet.adduser]
+        snippets[0]["groups"] = ["common"]
+        snippets[0]["tags"] = ["common"]
+        snippets[0]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/add-apt-repository.md"
+        ]
+        snippets[0][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/add-apt-repository.md"
+        snippets[1]["groups"] = ["common"]
+        snippets[1]["tags"] = ["common"]
+        snippets[1]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/adduser.md"
+        ]
+        snippets[1][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/adduser.md"
+
+        actual = GitHubApi.mock(expect)
+        file = "https://github.com/tldr-pages/tldr/tree/italian/pages.it/common"
+        contents = SnippyTldr(Logger(), file)
         assert len(contents) == 2
         assert next(contents) == snippets[0]
         assert next(contents) == snippets[1]
         assert len(responses.calls) == 6
+        assert GitHubApi.validate(expect, actual)
 
     @staticmethod
     @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_002():
-        """Test reading all ``pages`` under one ``translation``.
+    def test_github_tldr_platform_004():
+        """Test reading tldr pages from GitHib under one ``platform``.
 
-        Read all English translated tldr pages from GitHub master branch. The
-        URI does not have trailing slash.
+        Read all Brazilian Portuguese translated translated tldr pages from
+        linux platform in GitHub master branch.
         """
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages"
-        body = (
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'
-            # noqa pylint: disable=line-too-long
-        )
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/master/pages",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/sunos",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/windows",
+        expect = GitHubApi.default
+        expect[2]["request"][
+            "url"
+        ] = "https://api.github.com/repos/tldr-pages/tldr/git/trees/6b55cdc79c194f1951f3cd75f8908732d8a6e451"
+        expect[4]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/add-apt-repository.md"
+        expect[5]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/adduser.md"
+        snippets = [Snippet.add_apt_repository, Snippet.adduser]
+        snippets[0]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/add-apt-repository.md"
         ]
-        responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        for _ in range(len(requests)):
-            responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 5
+        snippets[0][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/add-apt-repository.md"
+        snippets[1]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/adduser.md"
+        ]
+        snippets[1][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/adduser.md"
+
+        actual = GitHubApi.mock(expect)
+        file = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux"
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 2
+        assert next(contents) == snippets[0]
+        assert next(contents) == snippets[1]
+        assert len(responses.calls) == 6
+        assert GitHubApi.validate(expect, actual)
 
     @staticmethod
     @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_003():
-        """Test reading all ``pages`` under one ``translation``.
+    def test_github_tldr_platform_005():
+        """Test reading tldr pages from GitHib under one ``platform``.
 
-        Read all English translated tldr pages from GitHub master branch. The
-        URI has a trailing slash.
+        Read all English translated tldr pages from linux platform in GitHub
+        waldyrious/alt-syntax branch.
         """
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/"
-        body = (
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages/windows">windows</a></span>'
-            # noqa pylint: disable=line-too-long
-        )
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/master/pages",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/linux",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/sunos",
-            "https://github.com/tldr-pages/tldr/tree/master/pages/windows",
+        expect = GitHubApi.default
+        expect[0]["request"][
+            "url"
+        ] = "https://api.github.com/repos/tldr-pages/tldr/branches/waldyrious/alt-syntax"
+        expect[4]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/add-apt-repository.md"
+        expect[5]["request"][
+            "url"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/adduser.md"
+        snippets = [Snippet.add_apt_repository, Snippet.adduser]
+        snippets[0]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/add-apt-repository.md"
         ]
-        responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        for _ in range(len(requests)):
-            responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 5
+        snippets[0][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/add-apt-repository.md"
+        snippets[1]["links"] = [
+            "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/adduser.md"
+        ]
+        snippets[1][
+            "source"
+        ] = "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/adduser.md"
+
+        actual = GitHubApi.mock(expect)
+        file = (
+            "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages/linux"
+        )
+        contents = SnippyTldr(Logger(), file)
+        assert len(contents) == 2
+        assert next(contents) == snippets[0]
+        assert next(contents) == snippets[1]
+        assert len(responses.calls) == 6
+        assert GitHubApi.validate(expect, actual)
 
     @staticmethod
     @responses.activate
@@ -456,107 +383,6 @@ class TestSnippyTldr(object):
             responses.add(responses.GET, requests.pop(0), body=body, status=200)
         _ = SnippyTldr(Logger(), uri)
         assert len(responses.calls) == 2
-
-    @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_007():
-        """Test reading ``tldr files`` from one ``page``.
-
-        Read all tldr files from one tldr page in GitHub master branch.
-        """
-
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/osx"
-        files = (
-            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="units.md" id="0c1af7a5ee4b57a644643230ed526db2-5d01b9086ff0bf4874b2757dbbde5233dd6ff3f7" href="/tldr-pages/tldr/blob/master/pages/osx/units.md">units.md</a></span>\n'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="w.md" id="0dd87f8dc5cbfa861c16c5ad3c332ab4-1cf83af6e84ea532e6c09a1cead470b6922c6a91" href="/tldr-pages/tldr/blob/master/pages/osx/w.md">w.md</a></span>\n'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate css-truncate-target"><a class="js-navigation-open" title="wacaw.md" id="6737e3eb2cef3810832f9b5adc372ea4-132b0b691c4c40bd79047f7b70afadd49dc43cd5" href="/tldr-pages/tldr/blob/master/pages/osx/wacaw.md">wacaw.md</a></span>\n'
-            # noqa pylint: disable=line-too-long
-        )
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/master/pages/osx",
-            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/units.md",
-            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/w.md",
-            "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/wacaw.md",
-        ]
-        responses.add(responses.GET, requests.pop(0), body=files, status=200)
-        responses.add(responses.GET, requests.pop(0), body="", status=200)
-        responses.add(responses.GET, requests.pop(0), body="", status=200)
-        responses.add(responses.GET, requests.pop(0), body="", status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 4
-
-    @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_file_001():
-        """Test reading one ``tldr file`` from the GitHub.
-
-        Read one tldr file directly from GitHub. The given URI is the URI
-        copied from a web browser navigation link. This is the 'blob' URI.
-        """
-
-        uri_cli = (
-            "https://github.com/tldr-pages/tldr/blob/master/pages.pt-BR/linux/alpine.md"
-        )
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
-        body = ""
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
-
-        uri_cli = "https://github.com/tldr-pages/tldr/blob/master/pages/osx/alpine.md"
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
-
-    @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_file_002():
-        """Test reading one ``tldr file`` from the GitHub.
-
-        Read one tldr file directly from GitHub. The given URI is the URI
-        copied from HTML page. This is the 'tree' URI that is redirected by
-        GitHun to 'blob' URI.
-        """
-
-        uri_cli = (
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux/alpine.md"
-        )
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
-        body = ""
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
-
-        uri_cli = "https://github.com/tldr-pages/tldr/tree/master/pages/osx/alpine.md"
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
-
-    @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_file_003():
-        """Test reading one ``tldr file`` from the GitHub.
-
-        Read one tldr file directly from GitHub. The given URI is the raw
-        formatted file, not the HTML URI.
-        """
-
-        uri_cli = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/alpine.md"
-        body = ""
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
-
-        uri_cli = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
-        uri_req = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/osx/alpine.md"
-        responses.add(responses.GET, uri_req, body=body, status=200)
-        _ = SnippyTldr(Logger(), uri_cli)
 
     @staticmethod
     @pytest.mark.skip(reason="no way of currently testing this")
