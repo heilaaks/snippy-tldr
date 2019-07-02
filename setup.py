@@ -41,12 +41,13 @@ EXTRAS_TESTS = (
     "pluggy==0.12.0",
     'pylint==1.9.4 ; python_version=="2.7.*"',
     'pylint==2.3.1 ; python_version>"2.7"',
-    "pytest==4.6.4",
+    'pytest==4.6.4 ; python_version<="3.4"',
+    'pytest==5.0.0 ; python_version>"3.4"',
     "pytest-cov==2.7.1",
     "pytest-mock==1.10.4",
     "pytest-xdist==1.29.0",
     "responses==0.10.6",
-    "tox==3.13.1",
+    "tox==3.13.2",
 )
 
 setup(
