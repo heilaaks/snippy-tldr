@@ -22,10 +22,10 @@
 import responses
 
 
-class classproperty(object):  # pylint: disable=too-few-public-methods
+class classproperty(object):  # pylint: disable=too-few-public-methods, invalid-name
     """Implement classproperty.
 
-    Implement a decorator that mimics object property [1].
+    Decorator that mimics object property [1].
 
     [1] https://stackoverflow.com/a/3203659
     """
@@ -39,7 +39,7 @@ class classproperty(object):  # pylint: disable=too-few-public-methods
         return self._getter(owner)
 
 
-class GitHubApi:  # pylint: disable=too-few-public-methods
+class GitHubApi:
     """Helper methods for GitHub API testing."""
 
     @classmethod
@@ -91,7 +91,7 @@ class GitHubApi:  # pylint: disable=too-few-public-methods
         """
 
         for i, http in enumerate(expect):
-            assert "GET" == actual.calls[i].request.method
+            assert actual.calls[i].request.method == "GET"
             assert http["request"]["url"] == actual.calls[i].request.url
             for header in http["request"]["headers"]:
                 assert header["name"] in actual.calls[i].request.headers
@@ -287,7 +287,7 @@ class GitHubApi:  # pylint: disable=too-few-public-methods
         return default
 
 
-class TldrPage:  # pylint: disable=too-few-public-methods
+class TldrPage:
     """Helper methods for tldr page examples."""
 
     @classproperty
@@ -392,7 +392,7 @@ class TldrPage:  # pylint: disable=too-few-public-methods
         return "\n".join(text)
 
 
-class Snippet:  # pylint: disable=too-few-public-methods
+class Snippet:
     """Helper methods for parsed tldr pages."""
 
     @classproperty
