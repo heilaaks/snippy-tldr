@@ -19,6 +19,7 @@
 
 """test_snippy_tldr: Test tldr man page import plugin."""
 
+import mock
 import pytest
 import responses
 
@@ -300,89 +301,75 @@ class TestSnippyTldr(object):
         assert GitHubApi.validate(expect, actual)
 
     @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_004():
-        """Test reading all ``pages`` under one ``translation``.
+    @pytest.mark.usefixtures("isfile_true")
+    def test_local_tldr_page_001():
+        """Test reading one tldr ``page`` from local directory.
 
-        Read all Brazilian Portuguese translated tldr pages from GitHub master
-        branch.
+        Read one tldr page directly from local file. In this case the file is
+        defined with different variations leading to one tldr page.
+
+        Because the filepath does not contain the tldr platform, the ``groups``
+        and ``tags`` attributes cannot be set. The ``links`` and ``source``
+        attributes cannot be set because the local filepath is not used as a
+        link.
         """
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR"
-        body = (
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.pt-BR/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.pt-BR/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="sunos" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.pt-BR/sunos">sunos</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.pt-BR/windows">windows</a></span>'
-            # noqa pylint: disable=line-too-long
-        )
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/osx",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/sunos",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/windows",
+        snippet = Snippet.pushd
+        snippet["groups"] = ["default"]
+        snippet["tags"] = []
+        snippet["links"] = []
+        snippet["source"] = ""
+
+        files = [
+            "pushd.md",
+            "./pushd.md",
+            "../pushd.md",
+            "../../pushd.md",
+            "../folder/pushd.md",
+            "/root/folder/pushd.md",
         ]
-        responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        for _ in range(len(requests)):
-            responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 5
+
+        file_content = mock.mock_open(read_data=TldrPage.pushd)
+        with mock.patch("snippy_tldr.plugin.open", file_content) as mock_file:
+            for file in files:
+                contents = SnippyTldr(Logger(), file)
+                assert len(contents) == 1
+                assert next(contents) == snippet
+                mock_file.assert_called_once_with(file, "r")
+                mock_file.reset_mock()
 
     @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_005():
-        """Test reading all ``pages`` from one ``translation``.
+    @pytest.mark.usefixtures("isfile_true")
+    def test_local_tldr_page_002():
+        """Test reading one tldr ``page`` from local directory.
 
-        Read all Chinese translated tldr pages from GitHub master branch.
+        Read one tldr page directly from local file. In this case the file is
+        defined with different variations leading to one tldr page and the file
+        has the tldr platform.
+
+        The ``links`` and ``source`` attributes cannot be set because the local
+        filepath is not used as a link.
         """
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh"
-        body = (
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="common" id="cf2aa06853ba7" href="/tldr-pages/tldr/tree/master/pages.zh/common">common</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="linux" id="e206a54e9f826" href="/tldr-pages/tldr/tree/master/pages.zh/linux">linux</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="osx" id="8e4f88e9d55c6" href="/tldr-pages/tldr/tree/master/pages.zh/osx">osx</a></span>'  # noqa pylint: disable=line-too-long
-            '<span class="css-truncate-target"><a class="js-navigation-open" title="windows" id="0f413351f633" href="/tldr-pages/tldr/tree/master/pages.zh/windows">windows</a></span>'
-            # noqa pylint: disable=line-too-long
-        )
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/master/pages.zh",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/common",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/osx",
-            "https://github.com/tldr-pages/tldr/tree/master/pages.zh/windows",
+        snippet = Snippet.adduser
+        snippet["links"] = []
+        snippet["source"] = ""
+
+        files = [
+            "./tldr/pages/linux/adduser.md",
+            "/linux/adduser.md",
+            "linux/adduser.md",
+            #"/root/path/linux/adduser.md" # This does not work.
         ]
-        responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        for _ in range(len(requests)):
-            responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 5
 
-    @staticmethod
-    @responses.activate
-    @pytest.mark.skip(reason="refactor")
-    @pytest.mark.usefixtures("mock-snippy")
-    def test_read_github_uri_006():
-        """Test reading all ``pages`` from a GitHub branch.
-
-        Read all Italian translated tldr pages from the italian branch.
-        """
-
-        uri = "https://github.com/tldr-pages/tldr/tree/italian/pages.it"
-        body = '<span class="css-truncate-target"><a class="js-navigation-open" title="common" id="9efab2399c7c560b" href="/tldr-pages/tldr/tree/italian/pages.it/common">common</a></span>'  # noqa pylint: disable=line-too-long
-        requests = [
-            "https://github.com/tldr-pages/tldr/tree/italian/pages.it",
-            "https://github.com/tldr-pages/tldr/tree/italian/pages.it/common",
-        ]
-        responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        for _ in range(len(requests)):
-            responses.add(responses.GET, requests.pop(0), body=body, status=200)
-        _ = SnippyTldr(Logger(), uri)
-        assert len(responses.calls) == 2
+        file_content = mock.mock_open(read_data=TldrPage.adduser)
+        with mock.patch("snippy_tldr.plugin.open", file_content) as mock_file:
+            for file in files:
+                contents = SnippyTldr(Logger(), file)
+                assert len(contents) == 1
+                assert next(contents) == snippet
+                mock_file.assert_called_once_with(file, "r")
+                mock_file.reset_mock()
 
     @staticmethod
     @pytest.mark.skip(reason="no way of currently testing this")
@@ -408,7 +395,7 @@ class TestSnippyTldr(object):
         #       uri = 'file:../tldr/pages/linux/alpine.md'
         #       uri = 'file:../tld'
 
-        uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
+        # uri = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/"
         # uri = "https://github.com/tldr-pages/tldr/tree/master/pages.zh/linux/"
         # uri = "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages/osx"
@@ -422,9 +409,10 @@ class TestSnippyTldr(object):
         # uri = "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages"
         # uri = '../tldr/pages/linux/'
         # uri = '../tldr/pages/'
-        # uri = 'file:../tldr/pages/linux/'
+        uri = "../tldr/pages/linux/"
         # uri = 'file:../tldr/pages'
-        # uri = 'file:../tldr/pages/linux/alpine.md'
+        uri = "../tldr/pages/linux/alpine.md"
+        uri = "alpine.md"
         # uri = 'file:../tld'
         SnippyTldr(Logger(), uri)
 

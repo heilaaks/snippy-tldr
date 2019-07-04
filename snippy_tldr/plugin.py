@@ -19,8 +19,10 @@
 
 """Snippy-tldr is a plugin to import tldr man pages for Snippy."""
 
-import os
+import os.path
 import re
+
+from glob import glob
 
 try:
     from urllib.parse import urljoin
@@ -154,7 +156,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
     )
 
     # Match examples like 'pages', 'pages.pt-BR' and 'pages.it'.
-    RE_MATCH_TLDR_TRANSLATION = r"pages(?:\.[a-zA-Z0.9-]+)?"
+    RE_MATCH_TLDR_TRANSLATION = r"pages(?:\.[a-zA-Z0-9-]+)?"
 
     # Match all known tldr platforms.
     RE_MATCH_TLDR_PLATFORM = r"%s" % "|".join(TLDR_PLATFORMS)
@@ -197,6 +199,32 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         (?:[/]?|$)              # Match optional trailing slash or end of string.
         """
         % RE_MATCH_TLDR_TRANSLATION,
+        re.VERBOSE,
+    )
+
+    # User may give the file path in different ways. This regexp tries to get the
+    # tldr platform out from the file path. The platform is needed for 'groups'
+    # and 'tags' attributes. If the file path does not contain the tldr platform,
+    # it cannot be read from the Markdown page and the value is not stored.
+    #
+    # Examples that work with this regexp:
+    #
+    #   1. /path/to/tldr/pages/linux/
+    #   2. ./tldr/pages/linux/alpine.md
+    #   3. ./tldr/pages.it/linux/alpine.md
+    #   4. ../tldr/pages.pt-BR/linux/alpine.md
+    #   5. ./pages/linux/
+    #   6. ./alpine.md
+    #   7. alpine.md
+    RE_CATCH_LOCAL_TLDR_PAGES = re.compile(
+        r"""
+        (?:[.])?                        # Match optional leading dot like in './alpine.md'.
+        (?:.*/tldr/)?                   # Match optional tldr project root path.
+        (?P<translation>%s)?[/]?        # Catch optional translation.
+        (?P<platform>%s)?[/]?           # Catch optional platform.
+        (?P<page>[a-zA-Z0-9-]+[.]md)?   # Catch optional tldr page.
+        """
+        % (RE_MATCH_TLDR_TRANSLATION, RE_MATCH_TLDR_PLATFORM),
         re.VERBOSE,
     )
 
@@ -334,6 +362,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         """Read all ``tldr pages`` from the URI."""
 
         pages = self._get_tlrd_pages(self._uri)
+        print("pages %s" % pages)
         for translation in pages:
             for platform in pages[translation]:
                 self._read_pages(platform, pages[translation][platform])
@@ -409,6 +438,24 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             count(pages)
 
             return pages
+
+        match = self.RE_CATCH_LOCAL_TLDR_PAGES.search(uri)
+        if match:
+            print(uri)
+            print("match %s" % (match.groups(),))
+            print("match %s" % match.group("page"))
+            translation = match.groupdict().get("translations", "undefined")
+            platform = match.groupdict().get("platform", "undefined")
+            if os.path.isfile(uri) and os.access(uri, os.R_OK):
+                pages = {translation: {platform: (uri,)}}
+            elif os.path.isdir(uri) and os.access(uri, os.R_OK):
+                files = glob(os.path.join(uri, "*.md"))
+                pages = {translation: {platform: tuple(files)}}
+            else:
+                Cause.push(
+                    Cause.HTTP_FORBIDDEN,
+                    "local tldr pages cannot be read: {}".format(uri),
+                )
 
         return pages
 
@@ -514,6 +561,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         snippet = ""
         uri = self.RE_MATCH_GITHUB_URL.sub(self.GITHUB_RAW, uri)
+        source = uri
         if "http" in urlparse(uri).scheme:
             self._logger.debug("request tldr page: %s", uri)
             page = requests.get(uri).text
@@ -521,9 +569,10 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             with open(uri, "r") as infile:
                 self._logger.debug("read tldr page: %s", uri)
                 page = infile.read()
+            source = ""
 
-        snippet = self._parse_tldr_page(uri, platform, page)
-        if snippet and self._schema.validate(snippet):
+        snippet = self._parse_tldr_page(source, platform, page)
+        if snippet:  # and self._schema.validate(snippet):
             self._snippets.append(snippet)
         else:
             self._logger.debug("failed to parse tldr man page: %s :from: %s", uri, page)
@@ -561,11 +610,17 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         """
 
         if http.status_code != 200:
-            if http.headers.get('X-RateLimit-Remaining', '0') == '0':
-                Cause.push(Cause.HTTP_FORBIDDEN, 'github api rate limit reached')
+            if http.headers.get("X-RateLimit-Remaining", "0") == "0":
+                Cause.push(Cause.HTTP_FORBIDDEN, "github api rate limit reached")
             else:
-                Cause.push(Cause.HTTP_FORBIDDEN, 'github api failure:  {}'.format(http.status_code))
-            self._logger.debug("github api response %s with headers: %s" %(http.status_code, http.headers))
+                Cause.push(
+                    Cause.HTTP_FORBIDDEN,
+                    "github api failure:  {}".format(http.status_code),
+                )
+            self._logger.debug(
+                "github api response %s with headers: %s"
+                % (http.status_code, http.headers)
+            )
             return True
 
         return False

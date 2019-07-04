@@ -22,55 +22,9 @@
 import pytest
 
 
-@pytest.fixture(scope="function", name="mock-snippy")
-def mock_snippy(mocker):
-    """Mock Snippy."""
+@pytest.fixture(scope="function", name="isfile_true")
+def mock_isfile_true(mocker):
+    """Mock os.path.isfile."""
 
-    mocker.patch.object(Parser, "format_data", return_value=())
-    mocker.patch.object(Parser, "format_brief", return_value="")
-    mocker.patch.object(Parser, "format_description", return_value="")
-    mocker.patch.object(Parser, "format_name", return_value="")
-    mocker.patch.object(Parser, "format_groups", return_value=())
-    mocker.patch.object(Parser, "format_tags", return_value=())
-
-
-class Const(object):  # pylint: disable=too-few-public-methods
-    """Dummy mock class."""
-
-    SNIPPET = "snippet"
-
-
-class Parser(object):  # pylint: disable=too-few-public-methods
-    """Dummy mock class."""
-
-    @classmethod
-    def format_data(cls, category, value):
-        """Dummy method for mock."""
-
-    @classmethod
-    def format_brief(cls, category, value):
-        """Dummy method for mock."""
-
-    @classmethod
-    def format_description(cls, category, value):
-        """Dummy method for mock."""
-
-    @classmethod
-    def format_name(cls, category, value):
-        """Dummy method for mock."""
-
-    @classmethod
-    def format_groups(cls, category, value):
-        """Dummy method for mock."""
-
-    @classmethod
-    def format_tags(cls, category, value):
-        """Dummy method for mock."""
-
-
-class Schema(object):  # pylint: disable=too-few-public-methods
-    """Dummy mock class."""
-
-    @classmethod
-    def validate(cls, document):
-        """Dummy method for mock."""
+    mocker.patch("snippy_tldr.plugin.os.path.isfile", return_value=True)
+    mocker.patch("snippy_tldr.plugin.os.access", return_value=True)
