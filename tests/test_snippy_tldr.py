@@ -60,13 +60,13 @@ class TestSnippyTldr(object):
             },
         ]
         actual = GitHubApi.mock(expect)
-        file = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/pushd.md"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 1
         assert next(contents) == Snippet.pushd
 
-        file = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/adduser.md"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/blob/master/pages/linux/adduser.md"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 1
         assert next(contents) == Snippet.adduser
 
@@ -92,8 +92,8 @@ class TestSnippyTldr(object):
             }
         ]
         actual = GitHubApi.mock(expect)
-        file = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 1
         assert next(contents) == Snippet.pushd
         assert len(responses.calls) == 1
@@ -120,8 +120,8 @@ class TestSnippyTldr(object):
             }
         ]
         actual = GitHubApi.mock(expect)
-        file = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/pushd.md"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/pushd.md"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 1
         assert next(contents) == Snippet.pushd
         assert len(responses.calls) == 1
@@ -156,8 +156,8 @@ class TestSnippyTldr(object):
 
         expect = GitHubApi.default
         actual = GitHubApi.mock(expect)
-        file = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/tree/master/pages/linux/"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 2
         assert next(contents) == Snippet.add_apt_repository
         assert next(contents) == Snippet.adduser
@@ -206,8 +206,8 @@ class TestSnippyTldr(object):
         ] = "https://raw.githubusercontent.com/tldr-pages/tldr/italian/pages.it/common/adduser.md"
 
         actual = GitHubApi.mock(expect)
-        file = "https://github.com/tldr-pages/tldr/tree/italian/pages.it/common"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/tree/italian/pages.it/common"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 2
         assert next(contents) == snippets[0]
         assert next(contents) == snippets[1]
@@ -248,8 +248,8 @@ class TestSnippyTldr(object):
         ] = "https://raw.githubusercontent.com/tldr-pages/tldr/master/pages.pt-BR/linux/adduser.md"
 
         actual = GitHubApi.mock(expect)
-        file = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux"
-        contents = SnippyTldr(Logger(), file)
+        infile = "https://github.com/tldr-pages/tldr/tree/master/pages.pt-BR/linux"
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 2
         assert next(contents) == snippets[0]
         assert next(contents) == snippets[1]
@@ -290,10 +290,10 @@ class TestSnippyTldr(object):
         ] = "https://raw.githubusercontent.com/tldr-pages/tldr/waldyrious/alt-syntax/pages/linux/adduser.md"
 
         actual = GitHubApi.mock(expect)
-        file = (
+        infile = (
             "https://github.com/tldr-pages/tldr/tree/waldyrious/alt-syntax/pages/linux"
         )
-        contents = SnippyTldr(Logger(), file)
+        contents = SnippyTldr(Logger(), infile)
         assert len(contents) == 2
         assert next(contents) == snippets[0]
         assert next(contents) == snippets[1]
@@ -331,11 +331,11 @@ class TestSnippyTldr(object):
 
         file_content = mock.mock_open(read_data=TldrPage.pushd)
         with mock.patch("snippy_tldr.plugin.open", file_content) as mock_file:
-            for file in files:
-                contents = SnippyTldr(Logger(), file)
+            for infile in files:
+                contents = SnippyTldr(Logger(), infile)
                 assert len(contents) == 1
                 assert next(contents) == snippet
-                mock_file.assert_called_once_with(file, "r")
+                mock_file.assert_called_once_with(infile, "r")
                 mock_file.reset_mock()
 
     @staticmethod
@@ -359,16 +359,16 @@ class TestSnippyTldr(object):
             "./tldr/pages/linux/adduser.md",
             "/linux/adduser.md",
             "linux/adduser.md",
-            #"/root/path/linux/adduser.md" # This does not work.
+            # "/root/path/linux/adduser.md" # This does not work.
         ]
 
         file_content = mock.mock_open(read_data=TldrPage.adduser)
         with mock.patch("snippy_tldr.plugin.open", file_content) as mock_file:
-            for file in files:
-                contents = SnippyTldr(Logger(), file)
+            for infile in files:
+                contents = SnippyTldr(Logger(), infile)
                 assert len(contents) == 1
                 assert next(contents) == snippet
-                mock_file.assert_called_once_with(file, "r")
+                mock_file.assert_called_once_with(infile, "r")
                 mock_file.reset_mock()
 
     @staticmethod

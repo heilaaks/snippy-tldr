@@ -45,7 +45,7 @@ except ImportError:
     from tests.conftest import Schema
 
 
-def snippy_import_hook(logger, file):
+def snippy_import_hook(logger, infile):
     """Import content for Snippy tool.
 
     This is an import hook that must return an iterator object. The iterator
@@ -84,7 +84,7 @@ def snippy_import_hook(logger, file):
 
     Args:
         logger (obj): Logger to be used with the plugin.
-        file (str): Value from the Snippy ``--file`` command line option.
+        infile (str): Value from the Snippy ``--file`` command line option.
 
     Returns:
         obj: Iterator object that stores the content from plugin to Snippy tool.
@@ -137,7 +137,7 @@ def snippy_import_hook(logger, file):
     >>>         return content
     """
 
-    return SnippyTldr(logger, file)
+    return SnippyTldr(logger, infile)
 
 
 class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
@@ -362,7 +362,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         """Read all ``tldr pages`` from the URI."""
 
         pages = self._get_tlrd_pages(self._uri)
-        print("pages %s" % pages)
         for translation in pages:
             for platform in pages[translation]:
                 self._read_pages(platform, pages[translation][platform])
@@ -383,6 +382,12 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         """
 
         def count(data):
+            """Count tldr pages and print log.
+
+            Args:
+                data (dict): All read tldr pages in a dictionary.
+            """
+
             pages = 0
             platforms = 0
             translations = 0
@@ -441,9 +446,6 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         match = self.RE_CATCH_LOCAL_TLDR_PAGES.search(uri)
         if match:
-            print(uri)
-            print("match %s" % (match.groups(),))
-            print("match %s" % match.group("page"))
             translation = match.groupdict().get("translations", "undefined")
             platform = match.groupdict().get("platform", "undefined")
             if os.path.isfile(uri) and os.access(uri, os.R_OK):

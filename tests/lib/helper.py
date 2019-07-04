@@ -39,7 +39,7 @@ class classproperty(object):  # pylint: disable=too-few-public-methods, invalid-
         return self._getter(owner)
 
 
-class GitHubApi:
+class GitHubApi(object):
     """Helper methods for GitHub API testing."""
 
     @classmethod
@@ -287,7 +287,7 @@ class GitHubApi:
         return default
 
 
-class TldrPage:
+class TldrPage(object):
     """Helper methods for tldr page examples."""
 
     @classproperty
@@ -392,7 +392,7 @@ class TldrPage:
         return "\n".join(text)
 
 
-class Snippet:
+class Snippet(object):
     """Helper methods for parsed tldr pages."""
 
     @classproperty
