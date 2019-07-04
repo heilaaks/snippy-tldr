@@ -17,41 +17,41 @@ To install, run:
 Usage
 =====
 
-To import all English translated tldr Linux man pages from GitHub, run:
-
-.. code:: text
-
-    snippy import --plugin tldr
-
-To import one man page from GitHub, run:
+To import one tldr page from GitHub, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file https://github.com/tldr-pages/tldr/blob/master/pages/linux/alpine.md
 
-To import all operating system man pages from GitHub, run:
+To import all English translated tldr pages for Linux from GitHub, run:
+
+.. code:: text
+
+    snippy import --plugin tldr
+
+To import all tldr pages from one platform from GitHub, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file https://github.com/tldr-pages/tldr/tree/master/pages/osx
 
-To import one tldr man page translation from GitHub, run:
+To import all Chinese translated tldr pages from GitHub, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file https://github.com/tldr-pages/tldr/tree/master/pages.zh
 
-To import tldr man pages locally, run:
-
-.. code:: text
-
-    snippy import --plugin tldr --file ./tldr/pages/linux
-
-To import one tldr man page locally, run:
+To import one tldr page from local file system, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file ./tldr/pages/linux/apk.md
+
+To import all Linux platform tldr pages from local file system, run:
+
+.. code:: text
+
+    snippy import --plugin tldr --file ./tldr/pages/linux
 
 .. _Snippy: https://github.com/heilaaks/snippy
 
