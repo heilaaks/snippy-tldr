@@ -754,7 +754,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             list: Formatted list of tldr man page snippets.
         """
 
-        list_ = map(Const.TEXT_TYPE.strip, data)
+        list_ = [value.strip() for value in data]
         list_ = list(filter(None, list_))
 
         return list_
