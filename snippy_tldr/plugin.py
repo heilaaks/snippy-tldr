@@ -766,6 +766,9 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         Remove additional Markdown tokens like '>' and limit the length of
         the string to be more suitable for content ``brief`` attribute.
+        
+        The last dot is removed because it is not considered part of the
+        ``brief`` attribute for styling issue.
 
         Args
             brief (str): Brief read from the tldr man page.
@@ -777,7 +780,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         brief = self.RE_MATCH_MKDN_BLOCK_QUOTE_TOKEN.sub("", brief)
         match = self.RE_CATCH_FIRST_SENTENCE.search(brief)
         if match:
-            brief = self._limit_string(match.group("sentence"), 40)
+            brief = self._limit_string(match.group("sentence").rstrip('.'), 40)
 
         return brief
 
