@@ -47,11 +47,17 @@ To import one tldr page from local file system, run:
 
     snippy import --plugin tldr --file ./tldr/pages/linux/apk.md
 
-To import all Linux platform tldr pages from local file system, run:
+To import all Linux platform tldr pages from a local file system, run:
 
 .. code:: text
 
     snippy import --plugin tldr --file ./tldr/pages/linux
+
+To import all platforms tldr pages from a local file system, run:
+
+.. code:: text
+
+    snippy import --plugin tldr --file ./tldr/pages
 
 .. _Snippy: https://github.com/heilaaks/snippy
 

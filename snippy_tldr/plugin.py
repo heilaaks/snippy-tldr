@@ -450,9 +450,20 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
             platform = match.groupdict().get("platform", "undefined")
             if os.path.isfile(uri) and os.access(uri, os.R_OK):
                 pages = {translation: {platform: (uri,)}}
+                count(pages)
             elif os.path.isdir(uri) and os.access(uri, os.R_OK):
+                # Try to read under a platform or all platforms.
                 files = glob(os.path.join(uri, "*.md"))
-                pages = {translation: {platform: tuple(files)}}
+                if files:
+                    pages = {translation: {platform: tuple(files)}}
+                else:
+                    pages[translation] = {}
+                    platforms = os.listdir(uri)
+                    for platform in platforms:
+                        if platform in self.TLDR_PLATFORMS:
+                            files = glob(os.path.join(uri + platform, "*.md"))
+                            pages[translation][platform] = tuple(files)
+                count(pages)
             else:
                 Cause.push(
                     Cause.HTTP_FORBIDDEN,
@@ -766,7 +777,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
         Remove additional Markdown tokens like '>' and limit the length of
         the string to be more suitable for content ``brief`` attribute.
-        
+
         The last dot is removed because it is not considered part of the
         ``brief`` attribute for styling issue.
 

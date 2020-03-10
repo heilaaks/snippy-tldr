@@ -1,9 +1,9 @@
 ## WORKING
    - [ ] Add tests to read different translations from GitHub.
-   - [ ] Add implementation to read localhost tldr pages.
 
 ## FEATURES
    - [ ] Add parallel requests to read tldr man pages from GitHub with GitHub raw URL.
+   - [ ] Add progress indicator when importing pages.
 
 ## FIX
    - [ ] Fix mocks and import failures when Snippy is released with the Plugins module.
