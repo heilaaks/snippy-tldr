@@ -9,7 +9,8 @@ Release history
 Features
 ~~~~~~~~
 
-* none
+* Add support to import tldr pages from GitHub.
+* Add support to import tldr pages from local files.
 
 Bugfixes
 ~~~~~~~~
