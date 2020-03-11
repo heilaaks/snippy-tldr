@@ -1,5 +1,5 @@
 ## WORKING
-   - [ ] Add tests to read different translations from GitHub.
+   - [ ] Add tests to read different translations from local files.
 
 ## FEATURES
    - [ ] Add parallel requests to read tldr man pages from GitHub with GitHub raw URL.
