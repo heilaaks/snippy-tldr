@@ -238,7 +238,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
 
     RE_CATCH_TLDR_DESCRIPTION = re.compile(
         r"""
-        [\#]+\s+\S+           # Match first line header.
+        [\#]+\s+[\S\s]+       # Match first line header.
         \n\n                  # Match one empty line after the header.
         [>]{1}\s+             # Match Markdown quote before description.
         (?P<description>.*?)  # Catch description ungreedely.
