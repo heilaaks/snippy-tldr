@@ -9,8 +9,11 @@ DEV_VERSION    ?= 0.2a0
 TAG_VERSION    ?= 0.1.0
 
 PIP            ?= pip
+PIP_CACHE      ?=
+PIP_PROXY      ?= ""
+PIP_UPGRADE    ?= --upgrade --upgrade-strategy eager
 PYTHON         ?= python
-PYTHON_VERSION ?= $(shell python -c 'import sys; print(sys.version_info[0])')
+PYTHON_VERSION ?= $(shell python -V 2>&1 | grep -Po '(?<=Python )(.+)')
 INSTALL_USER   ?=
 COVERAGE       ?= --cov snippy_tldr --cov-branch
 QUIET          ?= -qq
@@ -19,29 +22,36 @@ V              ?=
 # Enable verbose print with 'make [target] V=1'.
 $(V).SILENT:
 
+# Python 3.4 seems to fail a local installation for unknown reason.
+# This is a workaround to force the '--no-cache-dir' that seems to
+# fix the problem: 'BadZipfile: File is not a zip file'.
+ifneq (,$(findstring 3.4,$(PYTHON_VERSION)))
+PIP_CACHE = --no-cache-dir
+endif
+
 # The new pyproject.toml from PEP517 does not support --editable install.
 # It is not possible to run --user install inside a virtual environment.
 install:
-	$(PIP) install $(QUIET) $(INSTALL_USER) .
+	$(PIP) install $(PIP_CACHE) $(INSTALL_USER) $(QUIET) --proxy $(PIP_PROXY) .
 
 upgrade:
-	$(PIP) install --upgrade $(QUIET) $(INSTALL_USER) .
+	$(PIP) install $(PIP_UPGRADE) $(PIP_CACHE) $(INSTALL_USER) $(QUIET) --proxy $(PIP_PROXY) .
 
 uninstall:
 	$(PIP) uninstall $(QUIET) --yes snippy-tldr
 
 upgrade-wheel:
 	test -x "$(shell which pip)" || $(PYTHON) -m ensurepip $(INSTALL_USER)
-	$(PYTHON) -m pip install pip setuptools wheel twine --upgrade $(QUIET) $(INSTALL_USER)
+	$(PYTHON) -m pip install $(PIP_UPGRADE) $(PIP_CACHE) $(INSTALL_USER) $(QUIET) pip setuptools wheel twine
 
 install-devel:
-	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) .[devel]
+	$(PYTHON) -m pip install $(PIP_UPGRADE) $(PIP_CACHE) $(INSTALL_USER) $(QUIET) --proxy $(PIP_PROXY) .[devel]
 
 install-tests:
-	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) .[tests]
+	$(PYTHON) -m pip install $(PIP_UPGRADE) $(PIP_CACHE) $(INSTALL_USER) $(QUIET) --proxy $(PIP_PROXY) .[tests]
 
 install-coverage:
-	$(PYTHON) -m pip install $(QUIET) $(INSTALL_USER) codecov coveralls
+	$(PYTHON) -m pip install $(PIP_UPGRADE) $(PIP_CACHE) $(INSTALL_USER) $(QUIET) --proxy $(PIP_PROXY) codecov coveralls
 
 outdated:
 	$(PYTHON) -m pip list --outdated
