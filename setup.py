@@ -26,35 +26,43 @@ from setuptools import setup
 with io.open("README.rst", mode="r", encoding="utf-8") as infile:
     README = infile.read()
 
-REQUIRES = ("requests", "snippy>=0.10.0")
+REQUIRES = (
+    "requests",
+    "jsonschema==3.2.0",  # For the snippy.plugins module.
+    "snippy @ https://github.com/heilaaks/snippy/tarball/master",
+)
 
 EXTRAS_DEVEL = (
     'black ; python_version>"3.5"',
     'sphinx==1.8.5 ; python_version<="3.4"',
-    'sphinx==2.1.2 ; python_version>"3.4"',
+    'sphinx==2.4.4 ; python_version>="3.5"',
     "sphinx_rtd_theme==0.4.3",
     "sphinx-autobuild==0.7.1",
 )
 
 EXTRAS_TESTS = (
-    "flake8==3.7.7",
-    "pluggy==0.12.0",
-    'pylint==1.9.4 ; python_version=="2.7.*"',
-    'pylint==2.3.1 ; python_version>"2.7"',
-    'pytest==4.6.4 ; python_version<="3.4"',
-    'pytest==5.0.0 ; python_version>"3.4"',
-    "pytest-cov==2.7.1",
-    "pytest-mock==1.10.4",
-    "pytest-xdist==1.29.0",
-    "responses==0.10.6",
-    "tox==3.13.2",
+    "flake8==3.7.9",
+    'mock==3.0.5 ; python_version<="3.5"',
+    'mock==4.0.1 ; python_version>="3.6"',
+    "pluggy==0.13.1",
+    'pylint==1.9.5 ; python_version=="2.7.*"',
+    'pylint==2.3.1 ; python_version=="3.4.*"',
+    'pylint==2.4.4 ; python_version>="3.5"',
+    'pytest==4.6.9 ; python_version<="3.4"',
+    'pytest==5.3.5 ; python_version>="3.5"',
+    "pytest-cov==2.8.1",
+    "pytest-mock==2.0.0",
+    "pytest-xdist==1.31.0",
+    "responses==0.10.12",
+    'tox==3.14.5 ; python_version=="2.7.*" or python_version>="3.5"',
+    'tox==3.14.0 ; python_version=="3.4.*"',
 )
 
 setup(
     name="snippy-tldr",
     version="0.2a0",
     author="Heikki J. Laaksonen",
-    author_email="laaksonen.heikki.j@gmailmake t        .com",
+    author_email="laaksonen.heikki.j@gmail.com",
     license="Apache Software License 2.0",
     url="https://github.com/heilaaks/snippy-tldr",
     description="Snippy plugin to import tldr man pages.",
