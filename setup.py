@@ -42,6 +42,8 @@ EXTRAS_DEVEL = (
 
 EXTRAS_TESTS = (
     "flake8==3.7.9",
+    'importlib_metadata ; python_version!="3.4"',        # To get tox to install in Python 3.4.
+    'importlib_metadata==0.23 ; python_version=="3.4"',  # To get tox to install in Python 3.4.
     'mock==3.0.5 ; python_version<="3.5"',
     'mock==4.0.1 ; python_version>="3.6"',
     "pluggy==0.13.1",
