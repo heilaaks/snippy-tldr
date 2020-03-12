@@ -22,6 +22,7 @@
 
 from snippy_tldr.plugin import SnippyTldr
 
+
 class TestSnippyTldrParser(object):  # pylint: disable=too-few-public-methods
     """Test tldr plugin parser."""
 
@@ -34,53 +35,56 @@ class TestSnippyTldrParser(object):  # pylint: disable=too-few-public-methods
         """
 
         page = (
-            '# brew bundle',
-            '',
-            '> Bundler for Homebrew, Homebrew Cask and the Mac App Store.',
-            '> More information: <https://github.com/Homebrew/homebrew-bundle>.',
-            '',
-            '- Install packages from a Brewfile at the current path:',
-            '',
-            '`brew bundle`',
-            '',
-            '- Install packages from a specific Brewfile at a specific path:',
-            '',
-            '`brew bundle --file={{path/to/file}}`',
-            '',
-            '- Create a Brewfile from all installed packages:',
-            '',
-            '`brew bundle dump`',
-            '',
-            '- Uninstall all formulae not listed in the Brewfile:',
-            '',
-            '`brew bundle cleanup --force`',
-            '',
-            '- Check if there is anything to install or upgrade in the Brewfile:',
-            '',
-            '`brew bundle check`',
-            '',
-            '- Output a list of all entries in the Brewfile:',
-            '',
-            '`brew bundle list --all`',
+            "# brew bundle",
+            "",
+            "> Bundler for Homebrew, Homebrew Cask and the Mac App Store.",
+            "> More information: <https://github.com/Homebrew/homebrew-bundle>.",
+            "",
+            "- Install packages from a Brewfile at the current path:",
+            "",
+            "`brew bundle`",
+            "",
+            "- Install packages from a specific Brewfile at a specific path:",
+            "",
+            "`brew bundle --file={{path/to/file}}`",
+            "",
+            "- Create a Brewfile from all installed packages:",
+            "",
+            "`brew bundle dump`",
+            "",
+            "- Uninstall all formulae not listed in the Brewfile:",
+            "",
+            "`brew bundle cleanup --force`",
+            "",
+            "- Check if there is anything to install or upgrade in the Brewfile:",
+            "",
+            "`brew bundle check`",
+            "",
+            "- Output a list of all entries in the Brewfile:",
+            "",
+            "`brew bundle list --all`",
         )
         content = {
-            'category': 'snippet',
-            'data': [
-                'brew bundle  #  Install packages from a Brewfile at the current path.',
-                'brew bundle --file={{path/to/file}}  #  Install packages from a specific Brewfile at a specific path.',
-                'brew bundle dump  #  Create a Brewfile from all installed packages.',
-                'brew bundle cleanup --force  #  Uninstall all formulae not listed in the Brewfile.',
-                'brew bundle check  #  Check if there is anything to install or upgrade in the Brewfile.',
-                'brew bundle list --all  #  Output a list of all entries in the Brewfile.'
+            "category": "snippet",
+            "data": [
+                "brew bundle  #  Install packages from a Brewfile at the current path.",
+                "brew bundle --file={{path/to/file}}  #  Install packages from a specific Brewfile at a specific path.",
+                "brew bundle dump  #  Create a Brewfile from all installed packages.",
+                "brew bundle cleanup --force  #  Uninstall all formulae not listed in the Brewfile.",
+                "brew bundle check  #  Check if there is anything to install or upgrade in the Brewfile.",
+                "brew bundle list --all  #  Output a list of all entries in the Brewfile.",
             ],
-            'brief': 'Bundler for Homebrew, Homebrew Cask a...',
-            'description': 'Bundler for Homebrew, Homebrew Cask and the Mac App Store. More information: <https://github.com/Homebrew/homebrew-bundle>.',  # pylint: disable=line-too-long
-            'name': 'brew',
-            'groups': ['osx'],
-            'tags': ['osx'],
-            'links': [],
-            'source': ''}
-        snippet = SnippyTldr(Logger(), None)._parse_tldr_page("", "osx", '\n'.join(page))  # pylint: disable=protected-access
+            "brief": "Bundler for Homebrew, Homebrew Cask a...",
+            "description": "Bundler for Homebrew, Homebrew Cask and the Mac App Store. More information: <https://github.com/Homebrew/homebrew-bundle>.",  # pylint: disable=line-too-long
+            "name": "brew",
+            "groups": ["osx"],
+            "tags": ["osx"],
+            "links": [],
+            "source": "",
+        }
+        snippet = SnippyTldr(  # pylint: disable=protected-access
+            Logger(), "../tldr/pages/osx/brew-bundle.md"
+        )._parse_tldr_page("", "osx", "\n".join(page))
         assert content == snippet
 
 
