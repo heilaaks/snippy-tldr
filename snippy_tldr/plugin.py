@@ -33,16 +33,10 @@ except ImportError:
 import requests
 
 
-try:
-    from snippy.plugins import Const
-    from snippy.plugins import Parser
-    from snippy.plugins import Schema
-    from snippy.plugins import Cause
-
-except ImportError:
-    from tests.conftest import Const
-    from tests.conftest import Parser
-    from tests.conftest import Schema
+from snippy.plugins import Const
+from snippy.plugins import Parser
+from snippy.plugins import Schema
+from snippy.plugins import Cause
 
 
 def snippy_import_hook(logger, infile):

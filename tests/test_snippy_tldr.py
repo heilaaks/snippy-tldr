@@ -422,10 +422,3 @@ class Logger(object):  # pylint: disable=too-few-public-methods
 
     def debug(self, *args, **kwargs):
         """Dummy debug method."""
-
-
-class Const(object):  # pylint: disable=too-few-public-methods
-    """Constants mock."""
-
-    SNIPPET_COMMENT = "  #  "
-    SNIPPET = "snippet"
