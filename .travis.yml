@@ -4,6 +4,8 @@ cache: pip
 
 stages:
   - test Linux
+  - test macOS
+  - test Windows
 
 env:
   global:
@@ -11,15 +13,10 @@ env:
     - QUIET=
 
 install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; choco install python --version 3.7.5; fi
   - make upgrade-wheel
   - make install-coverage
   - make install-tests
-
-before_script:
-  - git clone https://github.com/heilaaks/snippy.git
-  - make -C snippy install
-  - make -C snippy install-server
-  - rm -rf snippy
 
 script:
   - make tests
@@ -42,7 +39,7 @@ jobs:
       python: 3.7
       stage: test Linux
     - name: Python 3.8
-      python: 3.8-dev
+      python: 3.8
       stage: test Linux
     - name: PyPy2
       python: pypy
@@ -50,11 +47,36 @@ jobs:
     - name: PyPy3
       python: pypy3
       stage: test Linux
+    - name: lint python2
+      python: 2.7
+      stage: test Linux
+      script:
+        - make lint
     - name: lint python3
       python: 3.7
       stage: test Linux
       script:
         - make lint
+
+    - name: Python 2.7
+      os: osx
+      osx_image: xcode10
+      language: shell
+      stage: test macOS
+    - name: Python 3.7
+      stage: test macOS
+      os: osx
+      osx_image: xcode10
+      language: shell
+      env:
+        - PYTHON=python3
+
+    - name: Python 3.7
+      stage: test Windows
+      os: windows
+      language: shell
+      env:
+        - PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 after_success:
   - codecov
