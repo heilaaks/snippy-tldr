@@ -791,7 +791,7 @@ class SnippyTldr(object):  # pylint: disable=too-many-instance-attributes
         brief = self.RE_MATCH_MKDN_BLOCK_QUOTE_TOKEN.sub("", brief)
         match = self.RE_CATCH_FIRST_SENTENCE.search(brief)
         if match:
-            brief = self._limit_string(match.group("sentence").rstrip('.'), 40)
+            brief = self._limit_string(match.group("sentence").rstrip("."), 40)
 
         return brief
 
