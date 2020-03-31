@@ -29,7 +29,7 @@ with io.open("README.rst", mode="r", encoding="utf-8") as infile:
 REQUIRES = (
     "requests",
     "jsonschema==3.2.0",  # For the snippy.plugins module.
-    "snippy @ https://github.com/heilaaks/snippy/tarball/master",
+    "snippy>=0.11.0",
 )
 
 EXTRAS_DEVEL = (
@@ -62,7 +62,7 @@ EXTRAS_TESTS = (
 
 setup(
     name="snippy-tldr",
-    version="0.2a0",
+    version="0.2.0",
     author="Heikki J. Laaksonen",
     author_email="laaksonen.heikki.j@gmail.com",
     license="Apache Software License 2.0",
@@ -75,7 +75,7 @@ setup(
     install_requires=REQUIRES,
     zip_safe=False,
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Plugins",
         "Intended Audience :: Developers",
         "Intended Audience :: Information Technology",
