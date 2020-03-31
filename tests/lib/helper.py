@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Snippy-tldr - A plugin to import tldr man pages for Snippy.
-#  Copyright 2019 Heikki J. Laaksonen  <laaksonen.heikki.j@gmail.com>
+#  Copyright 2019-2020 Heikki J. Laaksonen  <laaksonen.heikki.j@gmail.com>
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.

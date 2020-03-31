@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('./../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'snippy-tldr'
-copyright = '2019, Heikki J. Laaksonen'
+copyright = '2019-2020, Heikki J. Laaksonen'
 author = 'Heikki J. Laaksonen'
 
 # The full version, including alpha/beta/rc tags
