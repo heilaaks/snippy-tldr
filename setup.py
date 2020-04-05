@@ -40,6 +40,15 @@ EXTRAS_DEVEL = (
     "sphinx-autobuild==0.7.1",
 )
 
+EXTRAS_RELEASE = (
+    'readme-renderer      ; python_version!="3.4"',  # To get twine to install in Python3.4.
+    'readme-renderer<25.0 ; python_version=="3.4"',  # To get twine to install in Python3.4.
+    "setuptools",
+    'twine       ; python_version!="3.4"',
+    'twine<2.0.0 ; python_version=="3.4"',
+    "wheel",
+)
+
 EXTRAS_TESTS = (
     "flake8==3.7.9",
     'importlib_metadata ; python_version!="3.4"',  # To get tox to install in Python 3.4.
@@ -95,7 +104,11 @@ setup(
         "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
     ],
-    extras_require={"devel": EXTRAS_DEVEL + EXTRAS_TESTS, "tests": EXTRAS_TESTS},
+    extras_require={
+        "devel": EXTRAS_DEVEL + EXTRAS_TESTS,
+        "release": EXTRAS_RELEASE,
+        "tests": EXTRAS_TESTS,
+    },
     tests_require=EXTRAS_TESTS,
     test_suite="tests",
     entry_points={"snippyplugin": ["snippy = snippy_tldr.plugin"]},
